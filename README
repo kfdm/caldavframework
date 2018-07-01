@@ -1,0 +1,10 @@
+# TODO
+
+It is inevitable that developers try to build their own ToDo app. This is my attempt
+
+## Goals
+
+* Well thought out keyboard shortcuts. See THL for examples
+* Sync with external systems. Be able to link to a JIRA or Github issue but track it within this app
+* Support for start date in addition to end date
+* Support for recurring tasks

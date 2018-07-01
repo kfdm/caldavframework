@@ -10,6 +10,11 @@ class Task(models.Model):
     title = models.CharField(max_length=255)
     project = models.ForeignKey("core.Project", on_delete=models.CASCADE, null=True, blank=True)
 
+    priority = models.IntegerField(max_value=9, min_value=0, default=0)
+ 
+    start = models.DateField(blank=True)
+    end = models.DateField(blank=True)
+
 
 class Project(models.Model):
     title = models.CharField(max_length=255)

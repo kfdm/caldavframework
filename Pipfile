@@ -5,6 +5,12 @@ verify_ssl = true
 
 [packages]
 django = "*"
+"todo" = {path = ".", editable = true}
+djangorestframework = "*"
+pytz = "*"
+raven = "*"
+prometheus-client = "*"
+social-auth-app-django = "*"
 
 [dev-packages]
 

@@ -20,20 +20,22 @@ class Task(models.Model):
         (STATUS_CANCELED, 'Canceled'),
     ])
     priority = models.IntegerField(default=0)
+    repeating = models.ForeignKey('core.Repeating', null=True, blank=True, on_delete=models.CASCADE)
  
     # For basic calendar date
     start = models.DateField(blank=True, null=True)
-    end = models.DateField(blank=True, null=True)
+    due = models.DateField(blank=True, null=True)
 
     # For specific calendar times
     startAt = models.DateTimeField(blank=True, null=True)
-    endAt = models.DateTimeField(blank=True, null=True)
+    dueAt = models.DateTimeField(blank=True, null=True)
 
 
 class Project(models.Model):
     title = models.CharField(max_length=255)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    public = models.BooleanField(default=False)
 
     def __str__(self):
         return ':'.join([self.title, self.owner.username])
@@ -47,6 +49,8 @@ class Tag(models.Model):
     title = models.CharField(max_length=255)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    public = models.BooleanField(default=False)
+    task_set = models.ManyToManyField("core.Task")
 
 
 class Context(models.Model):
@@ -54,6 +58,7 @@ class Context(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     location = models.TextField()
+    task_set = models.ManyToManyField("core.Task")
 
 
 class Note(models.Model):

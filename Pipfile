@@ -12,6 +12,7 @@ raven = "*"
 prometheus-client = "*"
 social-auth-app-django = "*"
 "psycopg2" = "*"
+requests = "*"
 
 [dev-packages]
 

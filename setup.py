@@ -13,6 +13,7 @@ setup(
         'prometheus_client',
         'pytz',
         'raven',
+        'requests',
         'social-auth-app-django==2.1.0',
     ],
     entry_points={

@@ -12,16 +12,23 @@ class Task(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
-    project = models.ForeignKey("core.Project", on_delete=models.CASCADE, null=True, blank=True)
+    project = models.ForeignKey(
+        "core.Project", on_delete=models.CASCADE, null=True, blank=True
+    )
 
-    status = models.IntegerField(default=STATUS_OPEN, choices=[
-        (STATUS_OPEN, 'Open'),
-        (STATUS_CLOSED, 'Closed'),
-        (STATUS_CANCELED, 'Canceled'),
-    ])
+    status = models.IntegerField(
+        default=STATUS_OPEN,
+        choices=[
+            (STATUS_OPEN, "Open"),
+            (STATUS_CLOSED, "Closed"),
+            (STATUS_CANCELED, "Canceled"),
+        ],
+    )
     priority = models.IntegerField(default=0)
-    repeating = models.ForeignKey('core.Repeating', null=True, blank=True, on_delete=models.CASCADE)
- 
+    repeating = models.ForeignKey(
+        "core.Repeating", null=True, blank=True, on_delete=models.CASCADE
+    )
+
     # For basic calendar date
     start = models.DateField(blank=True, null=True)
     due = models.DateField(blank=True, null=True)
@@ -29,6 +36,9 @@ class Task(models.Model):
     # For specific calendar times
     startAt = models.DateTimeField(blank=True, null=True)
     dueAt = models.DateTimeField(blank=True, null=True)
+
+    createdAt = models.DateTimeField(blank=True, null=True)
+    completedAt = models.DateTimeField(blank=True, null=True)
 
 
 class Project(models.Model):
@@ -38,7 +48,7 @@ class Project(models.Model):
     public = models.BooleanField(default=False)
 
     def __str__(self):
-        return ':'.join([self.title, self.owner.username])
+        return ":".join([self.title, self.owner.username])
 
 
 class Repeating(models.Model):

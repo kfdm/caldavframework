@@ -31,10 +31,10 @@ class Command(BaseCommand):
             yield {
                 "title": issue["title"],
                 "status": state(issue["state"]),
-                "startAt": issue["created_at"],
-                "dueAt": issue["closed_at"],
+                "createdAt": issue["created_at"],
+                "completedAt": issue["closed_at"],
             }, {
-                "project": repo,
+                "project": "GitHub/" + repo,
                 "external": issue["html_url"],
                 "tags": [x["name"] for x in issue.get("labels", [])],
             }

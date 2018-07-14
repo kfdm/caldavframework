@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 
 class Task(models.Model):
@@ -49,6 +50,9 @@ class Project(models.Model):
 
     def __str__(self):
         return ":".join([self.title, self.owner.username])
+
+    def get_absolute_url(self):
+        return reverse("project", kwargs={"uuid": self.uuid})
 
 
 class Repeating(models.Model):

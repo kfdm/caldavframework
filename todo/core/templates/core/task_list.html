@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-sm-3">
+        <ul>
+            <li>
+                    <a href="{% url 'inbox' %}">Inbox</a></td>
+            </li>
+            {% for project in project_list %}
+            <li>
+                <td><a href="{{project.get_absolute_url}}">{{project.title}}</a></td>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-sm-9">
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Repeating</th>
+            </tr>
+        {% for task in task_list %}
+            <tr>
+                <td>{{task.title}}</td>
+                <td>{{task.status}}</td>
+                <td>{{task.priority}}</td>
+                <td>{{task.repeating}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}

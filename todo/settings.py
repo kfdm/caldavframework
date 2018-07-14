@@ -118,4 +118,10 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-LOGIN_REDIRECT_URL = reverse_lazy('inbox')
+LOGIN_REDIRECT_URL = reverse_lazy("inbox")
+
+
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
+    INTERNAL_IPS = ['127.0.0.1']

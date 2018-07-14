@@ -29,6 +29,9 @@ class Task(models.Model):
     repeating = models.ForeignKey(
         "core.Repeating", null=True, blank=True, on_delete=models.CASCADE
     )
+    external = models.ForeignKey(
+        "core.URL", null=True, blank=True, on_delete=models.CASCADE
+    )
 
     # For basic calendar date
     start = models.DateField(blank=True, null=True)
@@ -81,5 +84,4 @@ class Note(models.Model):
 
 
 class URL(models.Model):
-    task = models.ForeignKey("core.Task", on_delete=models.CASCADE)
     url = models.URLField()

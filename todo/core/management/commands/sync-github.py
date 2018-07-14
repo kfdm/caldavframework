@@ -44,13 +44,12 @@ class Command(BaseCommand):
         owner = User.objects.get(username=username)
         for issue, meta in self.fetch(repo):
             try:
-                url = URL.objects.get(url=meta["external"])
+                task = Task.objects.get(external__url=meta['external'])
                 print("Found task")
-                task = url.task
-            except URL.DoesNotExist:
+            except Task.DoesNotExist:
                 print("Creating Task")
                 task = Task.objects.create(owner=owner, **issue)
-                URL.objects.create(url=meta["external"], task=task)
+                task.external = URL.objects.create(url=meta["external"])
 
             if task.project is None:
                 print("Updating Project")

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load todo %}
 {% block content %}
 
 <div class="row">
@@ -18,17 +18,20 @@
     <div class="col-sm-9">
         <table>
             <tr>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
                 <th>Title</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Repeating</th>
             </tr>
         {% for task in task_list %}
             <tr>
-                <td>{{task.title}}</td>
-                <td>{{task.status}}</td>
+                <td>{{task|icon}}</td>
                 <td>{{task.priority}}</td>
-                <td>{{task.repeating}}</td>
+                <td>{{task.title}}</td>
+                <td>
+                    {% if task.external %}
+                        <a href="{{task.external.url}}">X</a>
+                    {% endif %}
+                </td>
             </tr>
         {% endfor %}
         </table>

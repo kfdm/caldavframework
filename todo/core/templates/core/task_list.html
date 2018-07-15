@@ -21,17 +21,57 @@
                 <th>&nbsp;</th>
                 <th>&nbsp;</th>
                 <th>Title</th>
+                <th>Start</th>
+                <th>Due</th>
+                <th>&nbsp;</th>
             </tr>
         {% for task in task_list %}
             <tr>
-                <td>{{task|icon}}</td>
+                <form method="POST" action="{% url 'task' uuid=task.uuid %}">{% csrf_token %}
+                <td>
+                    <div class="input-group-prepend">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{task|icon}}</button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" name="status" value="1">Open</button>
+                            <button class="dropdown-item" name="status" value="2">Complete</button>
+                            <button class="dropdown-item" name="status" value="3">Cancel</button>
+                        </div>
+                    </div>
+                </td>
                 <td>{{task.priority}}</td>
                 <td>{{task.title}}</td>
                 <td>
+                    <div class="input-group-prepend">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {% if task.start %}{{task.start}}{% endif %}
+                        </button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" name="start" value="yeseterday">Yesterday</button>
+                            <button class="dropdown-item" name="start" value="today">Today</button>
+                            <button class="dropdown-item" name="start" value="tomorrow">Tomorrow</button>
+                            <button class="dropdown-item" name="start" value="reset">Reset</button>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group-prepend">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {% if task.due %}{{task.due}}{% endif %}
+                        </button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" name="due" value="yeseterday">Yesterday</button>
+                            <button class="dropdown-item" name="due" value="today">Today</button>
+                            <button class="dropdown-item" name="due" value="tomorrow">Tomorrow</button>
+                            <button class="dropdown-item" name="due" value="reset">Reset</button>
+                        </div>
+                    </div>
+                </td>
+                <td>
                     {% if task.external %}
-                        <a href="{{task.external.url}}">X</a>
+                        <a href="{{task.external.url}}">E</a>
                     {% endif %}
                 </td>
+                </form>
             </tr>
         {% endfor %}
         </table>

@@ -5,9 +5,6 @@
 <div class="row">
     <div class="col-sm-3">
         <ul>
-            <li>
-                <a href="{% url 'inbox' %}">Inbox</a></td>
-            </li>
             {% for project in project_list %}
             <li>
                 <td><a href="{{project.get_absolute_url}}">{{project.title}}</a></td>
@@ -21,6 +18,7 @@
                 <th>&nbsp;</th>
                 <th>&nbsp;</th>
                 <th>Title</th>
+                <th>&nbsp;</th>
                 <th>Start</th>
                 <th>Due</th>
                 <th>&nbsp;</th>
@@ -38,8 +36,16 @@
                         </div>
                     </div>
                 </td>
-                <td>{{task.priority}}</td>
-                <td>{{task.title}}</td>
+                <td>{{task|priority}}</td>
+                <td>{{task.title}}
+                    <br>
+                    {% if task.project %}
+                    <a class="badge badge-primary" href="{{task.project.get_absolute_url}}">{{task.project.title}}</a>
+                    {% endif %}
+                    {% for tag in task.tag_set.all %}
+                    <span class="badge badge-secondary">{{tag.title}}</span>
+                    {% endfor %}
+                </td>
                 <td>
                     <div class="input-group-prepend">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

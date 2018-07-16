@@ -27,4 +27,4 @@ if settings.DEBUG:
 
         urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))
     except ImportError:
-        pass
+        print("Error importing django_toolbar", __file__)

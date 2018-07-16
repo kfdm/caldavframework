@@ -2,7 +2,12 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
-from todo.core import views
+from rest_framework import routers
+from todo.core import rest, views
+
+router = routers.DefaultRouter(trailing_slash=False)
+router.register("task", rest.TaskViewSet)
+router.register("project", rest.ProjectViewSet)
 
 urlpatterns = [
     path("", views.About.as_view(), name="about"),
@@ -13,6 +18,7 @@ urlpatterns = [
     path("task/<uuid>", views.Task.as_view(), name="task"),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("api/", include((router.urls, "api"))),
 ]
 
 if settings.DEBUG:

@@ -2,6 +2,8 @@
 {% load todo %}
 {% block content %}
 
+{% regroup task_list by due as grouped_tasks %}
+
 <div class="row">
     <div class="col-sm-3">
         <ul>
@@ -13,6 +15,8 @@
         </ul>
     </div>
     <div class="col-sm-9">
+{% for tl in grouped_tasks %}
+        <h2>{{tl.grouper}}</h2>
         <table>
             <tr>
                 <th>&nbsp;</th>
@@ -23,8 +27,8 @@
                 <th>Due</th>
                 <th>&nbsp;</th>
             </tr>
-        {% for task in task_list %}
-            <tr>
+        {% for task in tl.list %}
+            <tr {% if task.due < today %}class="text-danger"{% endif %}>
                 <form method="POST" action="{% url 'task' uuid=task.uuid %}">{% csrf_token %}
                 <td>
                     <div class="input-group-prepend">
@@ -81,6 +85,7 @@
             </tr>
         {% endfor %}
         </table>
+{% endfor %}
     </div>
 </div>
 {% endblock %}

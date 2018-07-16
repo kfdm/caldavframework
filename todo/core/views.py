@@ -21,9 +21,11 @@ class Inbox(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(Inbox, self).get_context_data(**kwargs)
         context["project_list"] = models.Project.objects.filter(owner=self.request.user)
+        context["today"] = self.today
         return context
 
     def get_queryset(self):
+        self.today = datetime.date.today()
         return self.model.objects.filter(
             owner=self.request.user, project=None, status=models.Task.STATUS_OPEN
         ).order_by("due")
@@ -31,25 +33,30 @@ class Inbox(LoginRequiredMixin, ListView):
 
 class Today(Inbox):
     def get_queryset(self):
-        today = datetime.date.today()
+        self.today = datetime.date.today()
         return (
             self.model.objects.filter(owner=self.request.user)
-            .filter(Q(start__lte=today) | Q(start__lte=today) & Q(due__lte=today))
+            .filter(
+                Q(start__lte=self.today)
+                | Q(start__lte=self.today) & Q(due__lte=self.today)
+                | Q(start=None) & Q(due__lte=self.today)
+            )
             .order_by("due", "start")
         )
 
 
 class Upcoming(Inbox):
     def get_queryset(self):
-        start = datetime.date.today()
-        end = start + datetime.timedelta(days=7)
+        self.today = datetime.date.today()
+        end = self.today + datetime.timedelta(days=7)
         return self.model.objects.filter(
-            owner=self.request.user, due__gt=start, due__lte=end
+            owner=self.request.user, due__gt=self.today, due__lte=end
         ).order_by("due", "start")
 
 
 class Project(Inbox):
     def get_queryset(self):
+        self.today = datetime.date.today()
         return self.model.objects.filter(
             owner=self.request.user,
             project=self.kwargs["uuid"],

@@ -27,13 +27,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "v7!jr=$(3yp2b+6ajbv1&$cu$%b+xfxewdbulcadq74wp1-)s6"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'DEBUG' in os.environ
+DEBUG = os.environ('DEBUG', '0') == '1'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
-
+SITE_ID = 1
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

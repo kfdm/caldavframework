@@ -25,13 +25,13 @@ class Command(BaseCommand):
             return Task.STATUS_OPEN
 
         def priority(value):
-            if value == 'Minor':
+            if value == "Minor":
                 return 4
-            if value == 'Major':
+            if value == "Major":
                 return 6
-            if value == 'Critical':
+            if value == "Critical":
                 return 8
-            if value == 'Blocker':
+            if value == "Blocker":
                 return 10
             return 0
 
@@ -42,9 +42,10 @@ class Command(BaseCommand):
             json={
                 "jql": query,
                 "fields": [
-                    "duedate",
+                    "components",
                     "created",
                     "description",
+                    "duedate",
                     "priority",
                     "project",
                     "resolutiondate",
@@ -68,6 +69,7 @@ class Command(BaseCommand):
             }, {
                 "external": external,
                 "project": "JIRA/" + issue["fields"]["project"]["key"],
+                "tags": ["JIRA:" + x["name"] for x in issue["fields"]["components"]],
             }
         pprint(issue)
 

@@ -17,6 +17,7 @@ class Command(BaseCommand):
         parser.add_argument("repo")
 
     def fetch(self, repo):
+
         def state(value):
             if value == "closed":
                 return Task.STATUS_CLOSED
@@ -36,7 +37,7 @@ class Command(BaseCommand):
             }, {
                 "project": "GitHub/" + repo,
                 "external": issue["html_url"],
-                "tags": [x["name"] for x in issue.get("labels", [])],
+                "tags": ["GitHub:" + x["name"] for x in issue.get("labels", [])],
             }
         # print(issue)
 
@@ -44,7 +45,7 @@ class Command(BaseCommand):
         owner = User.objects.get(username=username)
         for issue, meta in self.fetch(repo):
             try:
-                task = Task.objects.get(external__url=meta['external'])
+                task = Task.objects.get(external__url=meta["external"])
                 print("Found task")
             except Task.DoesNotExist:
                 print("Creating Task")

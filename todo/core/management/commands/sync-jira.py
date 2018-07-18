@@ -24,6 +24,17 @@ class Command(BaseCommand):
                 return Task.STATUS_CLOSED
             return Task.STATUS_OPEN
 
+        def priority(value):
+            if value == 'Minor':
+                return 4
+            if value == 'Major':
+                return 6
+            if value == 'Critical':
+                return 8
+            if value == 'Blocker':
+                return 10
+            return 0
+
         url = "{}/rest/api/latest/search".format(os.environ.get("JIRA_URL"))
         response = requests.post(
             url,
@@ -53,8 +64,8 @@ class Command(BaseCommand):
                 "createdAt": issue["fields"]["created"],
                 "completedAt": issue["fields"]["resolutiondate"],
                 "due": issue["fields"]["duedate"],
-            }, {
                 "priority": priority(issue["fields"]["priority"]["name"]),
+            }, {
                 "external": external,
                 "project": "JIRA/" + issue["fields"]["project"]["key"],
             }
@@ -69,6 +80,10 @@ class Command(BaseCommand):
             try:
                 task = Task.objects.get(external__url=meta["external"])
                 print("Found task")
+                # TODO: Probably better way to handle this
+                for key, value in issue.items():
+                    setattr(task, key, value)
+
             except Task.DoesNotExist:
                 print("Creating Task")
                 task = Task.objects.create(owner=owner, **issue)

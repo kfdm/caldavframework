@@ -20,24 +20,30 @@ def icon(task):
 
 @register.filter(needs_autoescape=False, is_safe=True)
 def priority(task):
-    if task.priority < 1:
+    if task.priority > 7:
         return mark_safe(
-            '<span class="badge badge-pill badge-secondary">{}</span>'.format(
-                task.priority
-            )
+            '<span class="badge badge-pill badge-danger">{}</span>'.format(task.priority)
         )
-    if task.priority < 5:
-        return mark_safe(
-            '<span class="badge badge-pill badge-succes">{}</span>'.format(
-                task.priority
-            )
-        )
-    if task.priority < 7:
+    if task.priority >= 5:
         return mark_safe(
             '<span class="badge badge-pill badge-warning">{}</span>'.format(
                 task.priority
             )
         )
+    if task.priority > 3:
+        return mark_safe(
+            '<span class="badge badge-pill badge-info">{}</span>'.format(
+                task.priority
+            )
+        )
+    if task.priority > 1:
+        return mark_safe(
+            '<span class="badge badge-pill badge-success">{}</span>'.format(
+                task.priority
+            )
+        )
     return mark_safe(
-        '<span class="badge badge-pill badge-danger">{}</span>'.format(task.priority)
-    )
+            '<span class="badge badge-pill badge-secondary">{}</span>'.format(
+                task.priority
+            )
+        )

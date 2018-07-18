@@ -24,14 +24,16 @@ class Command(BaseCommand):
                 return Task.STATUS_CLOSED
             return Task.STATUS_OPEN
 
+        url = "{}/rest/api/latest/search".format(os.environ.get("JIRA_URL"))
         response = requests.post(
-            os.environ.get("JIRA_URL"),
+            url,
             auth=(os.environ.get("JIRA_USER"), os.environ.get("JIRA_PASSWORD")),
             json={
                 "jql": query,
                 "fields": [
-                    "description",
+                    "duedate",
                     "created",
+                    "description",
                     "priority",
                     "project",
                     "resolutiondate",
@@ -44,14 +46,16 @@ class Command(BaseCommand):
         # print(response.headers)
 
         for issue in response.json().get("issues", {}):
+            external = "{}/browse/{}".format(os.environ.get("JIRA_URL"), issue["key"])
             yield {
                 "title": issue["fields"]["summary"],
                 "status": state(issue["fields"]["status"]),
                 "createdAt": issue["fields"]["created"],
                 "completedAt": issue["fields"]["resolutiondate"],
+                "due": issue["fields"]["duedate"],
             }, {
-                "priority": issue["fields"]["priority"]["name"],
-                "external": issue["self"],
+                "priority": priority(issue["fields"]["priority"]["name"]),
+                "external": external,
                 "project": "JIRA/" + issue["fields"]["project"]["key"],
             }
         pprint(issue)
@@ -63,13 +67,12 @@ class Command(BaseCommand):
             # print(issue, meta)
             # continue
             try:
-                url = URL.objects.get(url=meta["external"])
+                task = Task.objects.get(external__url=meta["external"])
                 print("Found task")
-                task = url.task
-            except URL.DoesNotExist:
+            except Task.DoesNotExist:
                 print("Creating Task")
                 task = Task.objects.create(owner=owner, **issue)
-                URL.objects.create(url=meta["external"], task=task)
+                task.external = URL.objects.create(url=meta["external"])
 
             if task.project is None:
                 print("Updating Project")

@@ -35,7 +35,9 @@ class Today(Inbox):
     def get_queryset(self):
         self.today = datetime.date.today()
         return (
-            self.model.objects.filter(owner=self.request.user)
+            self.model.objects.filter(
+                owner=self.request.user, status=models.Task.STATUS_OPEN
+            )
             .filter(
                 Q(start__lte=self.today)
                 | Q(start__lte=self.today) & Q(due__lte=self.today)

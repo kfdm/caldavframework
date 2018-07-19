@@ -36,12 +36,15 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 SITE_ID = 1
 INSTALLED_APPS = [
     "django.contrib.admin",
+    "django.contrib.admindocs",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
+    "rest_framework_swagger",
     "todo.core",
 ]
 

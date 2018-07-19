@@ -6,16 +6,19 @@ verify_ssl = true
 [packages]
 django = "*"
 "todo" = {path = ".", editable = true}
-djangorestframework = "*"
+djangorestframework = "==3.8.2"
 pytz = "*"
 raven = "*"
 prometheus-client = "*"
 social-auth-app-django = "*"
 "psycopg2" = "*"
 requests = "*"
+coreapi = "*"
+django-rest-swagger = "*"
 
 [dev-packages]
 django-debug-toolbar = "*"
+docutils = "*"
 
 [requires]
 python_version = "3.6"

@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from rest_framework import routers
+from rest_framework_swagger.views import get_swagger_view
 from todo.core import rest, views
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -16,8 +17,10 @@ urlpatterns = [
     path("project/", views.Inbox.as_view(), name="inbox"),
     path("project/<uuid>", views.Project.as_view(), name="project"),
     path("task/<uuid>", views.Task.as_view(), name="task"),
+    path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("api", get_swagger_view(), name="swagger"),
     path("api/", include((router.urls, "api"))),
 ]
 

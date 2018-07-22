@@ -2,10 +2,9 @@ import logging
 import os
 from pprint import pprint
 
-import requests
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from todo.core.models import URL, Project, Task
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +13,10 @@ class Command(BaseCommand):
     help = "Import projects from JIRA"
 
     def add_arguments(self, parser):
+        parser.add_argument("-s", "--site-id", default=settings.SITE_ID)
         parser.add_argument("username")
 
     def fetch(self, query):
-
         def state(value):
             # print('state', value)
             if value["statusCategory"]["colorName"] == "green":
@@ -66,36 +65,29 @@ class Command(BaseCommand):
                 "completedAt": issue["fields"]["resolutiondate"],
                 "due": issue["fields"]["duedate"],
                 "priority": priority(issue["fields"]["priority"]["name"]),
-            }, {
-                "external": external,
-                "project": "JIRA/" + issue["fields"]["project"]["key"],
-                "tags": ["JIRA:" + x["name"] for x in issue["fields"]["components"]],
+                "meta": {
+                    "external": external,
+                    "project": "JIRA/" + issue["fields"]["project"]["key"],
+                    "tags": [
+                        "JIRA:" + x["name"] for x in issue["fields"]["components"]
+                    ],
+                },
             }
         pprint(issue)
 
-    def handle(self, username, **options):
-        owner = User.objects.get(username=username)
+    def handle(self, site_id, username, **options):
+        site = Site.objects.get(pk=site_id)
+        token, _ = Token.objects.get_or_create(user__username=username)
         query = "updated >= -30d AND assignee in (currentUser())"
-        for issue, meta in self.fetch(query):
-            # print(issue, meta)
-            # continue
-            try:
-                task = Task.objects.get(external__url=meta["external"])
-                print("Found task")
-                # TODO: Probably better way to handle this
-                for key, value in issue.items():
-                    setattr(task, key, value)
 
-            except Task.DoesNotExist:
-                print("Creating Task")
-                task = Task.objects.create(owner=owner, **issue)
-                task.external = URL.objects.create(url=meta["external"])
+        if site.domain.startswith("localhost"):
+            url = "http://{}{}".format(site.domain, reverse("api:task-bulk-import"))
+        else:
+            url = "https://{}{}".format(site.domain, reverse("api:task-bulk-import"))
 
-            if task.project is None:
-                print("Updating Project")
-                project, created = Project.objects.get_or_create(
-                    title=meta["project"], owner=owner
-                )
-                task.project = project
-
-            task.save()
+        batch = list(self.fetch(query))
+        response = requests.post(
+            url, json=batch, headers={"Authorization": "Token " + token.key}
+        )
+        response.raise_for_status()
+        pprint(response.json())

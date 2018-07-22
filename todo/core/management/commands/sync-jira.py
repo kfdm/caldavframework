@@ -5,6 +5,7 @@ from pprint import pprint
 from django.core.management.base import BaseCommand
 
 import requests
+from todo.core.models import Task
 
 logger = logging.getLogger(__name__)
 

@@ -8,6 +8,7 @@ from django.urls import reverse
 
 import requests
 from rest_framework.authtoken.models import Token
+from todo.core.models import Task
 
 logger = logging.getLogger(__name__)
 

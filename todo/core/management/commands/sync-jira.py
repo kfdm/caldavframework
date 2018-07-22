@@ -2,9 +2,12 @@ import logging
 import os
 from pprint import pprint
 
-from django.core.management.base import BaseCommand
-
 import requests
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.management.base import BaseCommand
+from django.urls import reverse
+from rest_framework.authtoken.models import Token
 from todo.core.models import Task
 
 logger = logging.getLogger(__name__)
@@ -18,6 +21,7 @@ class Command(BaseCommand):
         parser.add_argument("username")
 
     def fetch(self, query):
+
         def state(value):
             # print('state', value)
             if value["statusCategory"]["colorName"] == "green":

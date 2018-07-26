@@ -39,12 +39,18 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False)
     def calendar(self, request):
         cal = icalendar.Calendar()
-        for task in models.Task.objects.filter(owner=request.user).exclude(
-            start=None, due=None
+        for task in (
+            models.Task.objects.filter(owner=request.user)
+            .exclude(start=None, due=None)
+            .filter(status=models.Task.STATUS_OPEN)
         ):
             event = icalendar.Event()
-            event["uid"] = task.uuid
-            event.add("summary", task.title)
+            event.add("uid", task.uuid)
+
+            if task.project:
+                event.add("summary", "{} #{}".format(task.title, task.project))
+            else:
+                event.add("summary", task.title)
             event.add("url", request.build_absolute_uri(task.get_absolute_url()))
 
             if task.start and task.due:

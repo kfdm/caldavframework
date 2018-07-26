@@ -15,6 +15,7 @@ social-auth-app-django = "*"
 requests = "*"
 coreapi = "*"
 django-rest-swagger = "*"
+icalendar = "*"
 
 [dev-packages]
 django-debug-toolbar = "*"

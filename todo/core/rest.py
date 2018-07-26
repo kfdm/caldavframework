@@ -2,6 +2,9 @@
 import json
 import logging
 
+from django.http import HttpResponse
+
+import icalendar
 from rest_framework import viewsets
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -20,7 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
-    authentication_classes = (SessionAuthentication, TokenAuthentication)
+    authentication_classes = (
+        BasicAuthentication,
+        SessionAuthentication,
+        TokenAuthentication,
+    )
     # filter_backends = (OrderingFilter,)
     permission_classes = (DjangoModelPermissions,)
     queryset = models.Task.objects.all()
@@ -29,13 +36,37 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(owner=self.request.user)
 
+    @action(detail=False)
+    def calendar(self, request):
+        cal = icalendar.Calendar()
+        for task in models.Task.objects.filter(owner=request.user).exclude(
+            start=None, due=None
+        ):
+            event = icalendar.Event()
+            event["uid"] = task.uuid
+            event.add("summary", task.title)
+            event.add("url", request.build_absolute_uri(task.get_absolute_url()))
+
+            if task.start and task.due:
+                event.add("dtstart", task.start)
+                event.add("dtend", task.due)
+            elif task.start:
+                event.add("dtstart", task.start)
+                event.add("dtend", task.start)
+            elif task.due:
+                event.add("dtstart", task.due)
+                event.add("dtend", task.due)
+
+            cal.add_component(event)
+        return HttpResponse(cal.to_ical(), content_type="text/plain")
+
     @action(methods=["post"], detail=False)
     def bulk_import(self, request):
         data = json.loads(request.body.decode("utf8"))
         updates = {}
         for issue in data:
-            meta = issue.pop('meta', {})
-            
+            meta = issue.pop("meta", {})
+
             try:
                 task = models.Task.objects.get(external__url=meta["external"])
                 print("Found task")
@@ -57,8 +88,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
             task.save()
             updates[str(task.uuid)] = {
-                'title': task.title,
-                'external': str(task.external)
+                "title": task.title,
+                "external": str(task.external),
             }
 
         return Response(updates)

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load todo %}
+{% block content %}
+<dl>
+    <dt>Title</dt><dd>{{task.title}}</dd>
+    <dt>Status</dt><dd>{{task.status}}</dd>
+    <dt>Priority</dt><dd>{{task|priority}}</dd>
+    {% if task.external %}
+    <dt>External</dt><dd><a href="{{task.external.url}}">E</a></dd>
+    {% endif %}
+</dl>
+
+{% endblock %}

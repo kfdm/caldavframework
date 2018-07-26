@@ -2,7 +2,7 @@ import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic.base import TemplateView, View
 from django.views.generic.list import ListView
 
@@ -75,6 +75,10 @@ class Task(LoginRequiredMixin, View):
         if value == "tomorrow":
             return datetime.date.today() + datetime.timedelta(days=1)
         return None
+
+    def get(self, request, uuid):
+        task = get_object_or_404(models.Task, uuid=uuid)
+        return render(request, "core/task_detail.html", {"task": task})
 
     def post(self, request, uuid):
         task = get_object_or_404(models.Task, uuid=uuid)

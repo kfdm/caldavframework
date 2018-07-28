@@ -45,7 +45,7 @@ class Task(models.Model):
     completedAt = models.DateTimeField(blank=True, null=True)
 
     def get_absolute_url(self):
-        return reverse("task", kwargs={"uuid": self.uuid})
+        return reverse("task", kwargs={"pk": self.uuid})
 
 
 class Project(models.Model):

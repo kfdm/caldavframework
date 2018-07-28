@@ -29,7 +29,7 @@
             </tr>
         {% for task in tl.list %}
             <tr {% if task.due < today %}class="text-danger"{% endif %}>
-                <form method="POST" action="{% url 'task' uuid=task.uuid %}">{% csrf_token %}
+                <form method="POST" action="{% url 'task' pk=task.pk %}">{% csrf_token %}
                 <td>
                     <div class="input-group-prepend">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{task|icon}}</button>
@@ -81,6 +81,7 @@
                         <a href="{{task.external.url}}">E</a>
                     {% endif %}
                 </td>
+                <td><a href="{{task.get_absolute_url}}">?</a></td>
                 </form>
             </tr>
         {% endfor %}

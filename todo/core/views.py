@@ -3,7 +3,8 @@ import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.generic.base import TemplateView, View
+from django.views.generic.base import RedirectView, TemplateView, View
+from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
 from todo.core import models
@@ -14,21 +15,15 @@ class About(TemplateView):
     template_name = "about.html"
 
 
-class Inbox(LoginRequiredMixin, ListView):
+class Inbox(RedirectView):
+    permanent = False
 
-    model = models.Task
-
-    def get_context_data(self, **kwargs):
-        context = super(Inbox, self).get_context_data(**kwargs)
-        context["project_list"] = models.Project.objects.filter(owner=self.request.user)
-        context["today"] = self.today
-        return context
-
-    def get_queryset(self):
-        self.today = datetime.date.today()
-        return self.model.objects.filter(
-            owner=self.request.user, project=None, status=models.Task.STATUS_OPEN
-        ).order_by("due")
+    def get_redirect_url(self, *args, **kwargs):
+        inbox, _ = models.Project.objects.get_or_create(
+            owner=self.request.user,
+            title='Inbox',
+        )
+        return inbox.get_absolute_url()
 
 
 class Today(Inbox):
@@ -47,7 +42,18 @@ class Today(Inbox):
         )
 
 
-class Upcoming(Inbox):
+class ListBase(LoginRequiredMixin, ListView):
+
+    model = models.Task
+
+    def get_context_data(self, **kwargs):
+        context = super(ListBase, self).get_context_data(**kwargs)
+        context["project_list"] = models.Project.objects.filter(owner=self.request.user)
+        context["today"] = self.today
+        return context
+
+
+class Upcoming(ListBase):
     def get_queryset(self):
         self.today = datetime.date.today()
         end = self.today + datetime.timedelta(days=7)
@@ -56,7 +62,7 @@ class Upcoming(Inbox):
         ).order_by("due", "start")
 
 
-class Project(Inbox):
+class Project(ListBase):
     def get_queryset(self):
         self.today = datetime.date.today()
         return self.model.objects.filter(
@@ -66,7 +72,9 @@ class Project(Inbox):
         ).order_by("due", "start")
 
 
-class Task(LoginRequiredMixin, View):
+class Task(LoginRequiredMixin, DetailView):
+    model = models.Task
+
     def ts(self, value):
         if value == "today":
             return datetime.date.today()
@@ -76,11 +84,7 @@ class Task(LoginRequiredMixin, View):
             return datetime.date.today() + datetime.timedelta(days=1)
         return None
 
-    def get(self, request, uuid):
-        task = get_object_or_404(models.Task, uuid=uuid)
-        return render(request, "core/task_detail.html", {"task": task})
-
-    def post(self, request, uuid):
+    def post(self, request, pk):
         task = get_object_or_404(models.Task, uuid=uuid)
         if "start" in self.request.POST:
             task.start = self.ts(self.request.POST["start"])
@@ -90,4 +94,18 @@ class Task(LoginRequiredMixin, View):
             task.save()
 
         print(self.request.POST)
+        return redirect("project", task.project.uuid)
+
+
+class TaskAdd(LoginRequiredMixin, View):
+    def post(self, request):
+        inbox, _ = models.Project.objects.get_or_create(
+            owner=request.user,
+            title='Inbox',
+        )
+        task = models.Task.objects.create(
+            owner=request.user,
+            title=request.POST['search'],
+            project=inbox,
+        )
         return redirect("project", task.project.uuid)

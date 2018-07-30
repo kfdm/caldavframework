@@ -20,13 +20,23 @@ class Inbox(RedirectView):
 
     def get_redirect_url(self, *args, **kwargs):
         inbox, _ = models.Project.objects.get_or_create(
-            owner=self.request.user,
-            title='Inbox',
+            owner=self.request.user, title="Inbox"
         )
         return inbox.get_absolute_url()
 
 
-class Today(Inbox):
+class ListBase(LoginRequiredMixin, ListView):
+
+    model = models.Task
+
+    def get_context_data(self, **kwargs):
+        context = super(ListBase, self).get_context_data(**kwargs)
+        context["project_list"] = models.Project.objects.filter(owner=self.request.user)
+        context["today"] = self.today
+        return context
+
+
+class Today(ListBase):
     def get_queryset(self):
         self.today = datetime.date.today()
         return (
@@ -40,17 +50,6 @@ class Today(Inbox):
             )
             .order_by("due", "start")
         )
-
-
-class ListBase(LoginRequiredMixin, ListView):
-
-    model = models.Task
-
-    def get_context_data(self, **kwargs):
-        context = super(ListBase, self).get_context_data(**kwargs)
-        context["project_list"] = models.Project.objects.filter(owner=self.request.user)
-        context["today"] = self.today
-        return context
 
 
 class Upcoming(ListBase):
@@ -75,37 +74,29 @@ class Project(ListBase):
 class Task(LoginRequiredMixin, DetailView):
     model = models.Task
 
-    def ts(self, value):
-        if value == "today":
-            return datetime.date.today()
-        if value == "yesterday":
-            return datetime.date.today() - datetime.timedelta(days=1)
-        if value == "tomorrow":
-            return datetime.date.today() + datetime.timedelta(days=1)
-        return None
-
     def post(self, request, pk):
-        task = get_object_or_404(models.Task, uuid=uuid)
+        task = get_object_or_404(models.Task, pk=pk)
+        print(self.request.POST)
         if "start" in self.request.POST:
-            task.start = self.ts(self.request.POST["start"])
+            task.start = (
+                self.request.POST["start"] if self.request.POST["start"] else None
+            )
             task.save()
         if "due" in self.request.POST:
-            task.due = self.ts(self.request.POST["due"])
+            task.due = self.request.POST["due"] if self.request.POST["due"] else None
             task.save()
 
-        print(self.request.POST)
+        if "next" in request.POST:
+            return redirect(request.POST["next"])
         return redirect("project", task.project.uuid)
 
 
 class TaskAdd(LoginRequiredMixin, View):
     def post(self, request):
         inbox, _ = models.Project.objects.get_or_create(
-            owner=request.user,
-            title='Inbox',
+            owner=request.user, title="Inbox"
         )
         task = models.Task.objects.create(
-            owner=request.user,
-            title=request.POST['search'],
-            project=inbox,
+            owner=request.user, title=request.POST["search"], project=inbox
         )
         return redirect("project", task.project.uuid)

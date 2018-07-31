@@ -1,10 +1,10 @@
 
+import datetime
 import json
 import logging
 
-from django.http import HttpResponse
-
 import icalendar
+from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -38,6 +38,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def calendar(self, request):
+        today = datetime.date.today()
         cal = icalendar.Calendar()
         for task in (
             models.Task.objects.filter(owner=request.user)
@@ -48,20 +49,20 @@ class TaskViewSet(viewsets.ModelViewSet):
             event.add("uid", task.uuid)
 
             if task.project:
-                event.add("summary", "{} #{}".format(task.title, task.project))
+                event.add("summary", "{} #{}".format(task.title, task.project.title))
             else:
                 event.add("summary", task.title)
             event.add("url", request.build_absolute_uri(task.get_absolute_url()))
 
             if task.start and task.due:
                 event.add("dtstart", task.start)
-                event.add("dtend", task.due)
+                event.add("dtend", task.due if task.due > today else today)
             elif task.start:
                 event.add("dtstart", task.start)
                 event.add("dtend", task.start)
             elif task.due:
                 event.add("dtstart", task.due)
-                event.add("dtend", task.due)
+                event.add("dtend", task.due if task.due > today else today)
 
             cal.add_component(event)
         return HttpResponse(cal.to_ical(), content_type="text/plain")

@@ -28,7 +28,7 @@ class Command(BaseCommand):
             return Task.STATUS_OPEN
 
         url = "https://api.github.com/repos/" + repo + "/issues"
-        result = requests.get(url)
+        result = requests.get(url, params={"state": "all"})
         result.raise_for_status()
         logger.debug("X-RateLimit-Limit: %s", result.headers.get("X-RateLimit-Limit"))
 

@@ -111,3 +111,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(owner=self.request.user)
+
+    @action(methods=["get"], detail=True)
+    def tasks(self, request, pk):
+        project = models.Project.objects.get(pk=pk)
+        qs = project.task_set.filter(owner=request.user)
+
+        if 'status' in request.GET:
+            for value, label in models.Task._meta.get_field('status').choices:
+                if request.GET['status'].lower() == label.lower():
+                    qs = qs.filter(status=value)
+
+        return Response(
+            serializers.TaskSerializer(qs, many=True).data
+        )

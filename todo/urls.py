@@ -9,6 +9,7 @@ from todo.core import rest, views
 router = routers.DefaultRouter(trailing_slash=False)
 router.register("task", rest.TaskViewSet)
 router.register("project", rest.ProjectViewSet)
+router.register("search", rest.SearchViewSet)
 
 urlpatterns = [
     path("", views.About.as_view(), name="about"),

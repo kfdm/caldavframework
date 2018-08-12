@@ -12,10 +12,7 @@ from rest_framework.authentication import (
     TokenAuthentication,
 )
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    DjangoModelPermissions,
-    DjangoModelPermissionsOrAnonReadOnly,
-)
+from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.response import Response
 from todo.core import models, serializers
 
@@ -117,11 +114,31 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = models.Project.objects.get(pk=pk)
         qs = project.task_set.filter(owner=request.user)
 
-        if 'status' in request.GET:
-            for value, label in models.Task._meta.get_field('status').choices:
-                if request.GET['status'].lower() == label.lower():
+        if "status" in request.GET:
+            for value, label in models.Task._meta.get_field("status").choices:
+                if request.GET["status"].lower() == label.lower():
                     qs = qs.filter(status=value)
 
-        return Response(
-            serializers.TaskSerializer(qs, many=True).data
-        )
+        return Response(serializers.TaskSerializer(qs, many=True).data)
+
+
+class SearchViewSet(viewsets.ModelViewSet):
+    authentication_classes = (SessionAuthentication, TokenAuthentication)
+    # filter_backends = (OrderingFilter,)
+    permission_classes = (DjangoModelPermissions,)
+    queryset = models.Search.objects.all()
+    serializer_class = serializers.ProjectSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(owner=self.request.user)
+
+    @action(methods=["get"], detail=True)
+    def tasks(self, request, pk):
+        qs = models.Search.objects.get(pk=pk).task_set
+
+        if "status" in request.GET:
+            for value, label in models.Task._meta.get_field("status").choices:
+                if request.GET["status"].lower() == label.lower():
+                    qs = qs.filter(status=value)
+
+        return Response(serializers.TaskSerializer(qs, many=True).data)

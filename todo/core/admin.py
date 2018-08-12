@@ -9,3 +9,7 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(models.Project)
 class ProjectAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.Search)
+class SearchAdmin(admin.ModelAdmin):
+    pass

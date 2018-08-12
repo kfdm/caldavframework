@@ -16,6 +16,7 @@ urlpatterns = [
     path("upcoming", views.Upcoming.as_view(), name="upcoming"),
     path("project/", views.Inbox.as_view(), name="inbox"),
     path("project/<uuid>", views.Project.as_view(), name="project"),
+    path("search/<uuid>", views.Search.as_view(), name="search"),
     path("task/new", views.TaskAdd.as_view(), name="task-add"),
     path("task/<pk>", views.Task.as_view(), name="task"),
     path("admin/doc/", include("django.contrib.admindocs.urls")),

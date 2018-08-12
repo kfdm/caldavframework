@@ -4,17 +4,6 @@
 
 {% regroup task_list by due as grouped_tasks %}
 
-<div class="row">
-    <div class="col-sm-3">
-        <ul>
-            {% for project in project_list %}
-            <li>
-                <td><a href="{{project.get_absolute_url}}">{{project.title}}</a></td>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="col-sm-9">
 {% for tl in grouped_tasks %}
         <h2>{{tl.grouper}}</h2>
         <table>
@@ -75,6 +64,5 @@
         {% endfor %}
         </table>
 {% endfor %}
-    </div>
-</div>
+
 {% endblock %}

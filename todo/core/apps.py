@@ -2,4 +2,7 @@ from django.apps import AppConfig
 
 
 class CoreConfig(AppConfig):
-    name = 'core'
+    name = "todo.core"
+
+    def ready(self):
+        from todo.core import signals

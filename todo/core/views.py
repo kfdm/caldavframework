@@ -32,6 +32,7 @@ class ListBase(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(ListBase, self).get_context_data(**kwargs)
         context["project_list"] = models.Project.objects.filter(owner=self.request.user)
+        context["search_list"] = models.Search.objects.filter(owner=self.request.user)
         context["today"] = self.today
         return context
 
@@ -69,6 +70,15 @@ class Project(ListBase):
             project=self.kwargs["uuid"],
             status=self.request.GET.get("status", models.Task.STATUS_OPEN),
         ).order_by("due", "start")
+
+
+class Search(ListBase):
+    def get_queryset(self):
+        self.today = datetime.date.today()
+        return models.Search.objects.get(
+            owner=self.request.user,
+            uuid=self.kwargs['uuid']
+        ).task_set.order_by("due", "start").prefetch_related('tag_set', 'project','external')
 
 
 class Task(LoginRequiredMixin, DetailView):

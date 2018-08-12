@@ -1,7 +1,10 @@
+import datetime
+import json
 import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 
 
@@ -59,6 +62,49 @@ class Project(models.Model):
 
     def get_absolute_url(self):
         return reverse("project", kwargs={"uuid": self.uuid})
+
+
+class Search(models.Model):
+    title = models.CharField(max_length=255)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    data = models.TextField()
+
+    def get_absolute_url(self):
+        return reverse("search", kwargs={"uuid": self.uuid})
+
+    @property
+    def task_set(self):
+        query = json.loads(self.data)
+        qs = Task.objects.filter(owner=self.owner)
+        replace = {"<today>": datetime.date.today()}
+        replace["<week>"] = replace["<today>"] + datetime.timedelta(days=7)
+
+        def filter_dict(qs, query):
+            print("filter_dict", query)
+
+            for k, v in query.items():
+                if v in replace:
+                    query[k] = replace[v]
+
+            return qs.filter(Q(**query))
+
+        def filter_list(qs, query):
+            print("filter_list", query)
+            q_ = Q()
+            for q in query:
+                print("q", q)
+                for k, v in q.items():
+                    if v in replace:
+                        q[k] = replace[v]
+                q_ |= Q(**q)
+            print(q_)
+            return qs.filter(q_)
+
+        if isinstance(query, list):
+            return filter_list(qs, query)
+        if isinstance(query, dict):
+            return filter_dict(qs, query)
 
 
 class Repeating(models.Model):

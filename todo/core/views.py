@@ -1,8 +1,7 @@
 import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.views.generic.base import RedirectView, TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
@@ -15,70 +14,57 @@ class About(TemplateView):
     template_name = "about.html"
 
 
-class Inbox(RedirectView):
+class RedirectSearch(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self, *args, **kwargs):
-        inbox, _ = models.Project.objects.get_or_create(
-            owner=self.request.user, title="Inbox"
+        search = get_object_or_404(
+            models.Search, owner=self.request.user, title__iexact=args[0]
+        )
+        return search.get_absolute_url()
+
+
+class RedirectProject(LoginRequiredMixin, RedirectView):
+    permanent = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        print(args, kwargs)
+        inbox, _ = models.Search.objects.get_or_create(
+            owner=self.request.user, title__iexact="Inbox"
         )
         return inbox.get_absolute_url()
 
 
-class ListBase(LoginRequiredMixin, ListView):
-
+class Project(LoginRequiredMixin, ListView):
     model = models.Task
 
-    def get_context_data(self, **kwargs):
-        context = super(ListBase, self).get_context_data(**kwargs)
-        context["project_list"] = models.Project.objects.filter(owner=self.request.user)
-        context["search_list"] = models.Search.objects.filter(owner=self.request.user)
-        context["today"] = self.today
-        return context
-
-
-class Today(ListBase):
     def get_queryset(self):
         self.today = datetime.date.today()
         return (
-            self.model.objects.filter(
-                owner=self.request.user, status=models.Task.STATUS_OPEN
+            models.Project.objects.get(
+                owner=self.request.user, uuid=self.kwargs["uuid"]
             )
-            .filter(
-                Q(start__lte=self.today)
-                | Q(start__lte=self.today) & Q(due__lte=self.today)
-                | Q(start=None) & Q(due__lte=self.today)
+            .task_set.filter(
+                status=self.request.GET.get("status", models.Task.STATUS_OPEN)
             )
             .order_by("due", "start")
+            .prefetch_related("tag_set", "project", "external")
         )
 
 
-class Upcoming(ListBase):
+class Search(LoginRequiredMixin, ListView):
+    model = models.Task
+
     def get_queryset(self):
         self.today = datetime.date.today()
-        end = self.today + datetime.timedelta(days=7)
-        return self.model.objects.filter(
-            owner=self.request.user, due__gt=self.today, due__lte=end
-        ).order_by("due", "start")
-
-
-class Project(ListBase):
-    def get_queryset(self):
-        self.today = datetime.date.today()
-        return self.model.objects.filter(
-            owner=self.request.user,
-            project=self.kwargs["uuid"],
-            status=self.request.GET.get("status", models.Task.STATUS_OPEN),
-        ).order_by("due", "start")
-
-
-class Search(ListBase):
-    def get_queryset(self):
-        self.today = datetime.date.today()
-        return models.Search.objects.get(
-            owner=self.request.user,
-            uuid=self.kwargs['uuid']
-        ).task_set.order_by("due", "start").prefetch_related('tag_set', 'project','external')
+        return (
+            models.Search.objects.get(owner=self.request.user, uuid=self.kwargs["uuid"])
+            .task_set.filter(
+                status=self.request.GET.get("status", models.Task.STATUS_OPEN)
+            )
+            .order_by("due", "start")
+            .prefetch_related("tag_set", "project", "external")
+        )
 
 
 class Task(LoginRequiredMixin, DetailView):

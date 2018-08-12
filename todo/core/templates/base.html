@@ -18,12 +18,12 @@
             <ul>
                 {% for search in search_list %}
                 <li>
-                    <td><a href="{{search.get_absolute_url}}">{{search.title}}</a></td>
+                    <td><a class="badge badge-warning" href="{{search.get_absolute_url}}">{{search.title}}</a></td>
                 </li>
                 {% endfor %}
                 {% for project in project_list %}
                 <li>
-                    <td><a href="{{project.get_absolute_url}}">{{project.title}}</a></td>
+                    <td><a class="badge badge-primary" href="{{project.get_absolute_url}}">{{project.title}}</a></td>
                 </li>
                 {% endfor %}
             </ul>

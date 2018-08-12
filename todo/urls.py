@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from rest_framework import routers
 from rest_framework_swagger.views import get_swagger_view
@@ -12,9 +12,11 @@ router.register("project", rest.ProjectViewSet)
 
 urlpatterns = [
     path("", views.About.as_view(), name="about"),
-    path("today", views.Today.as_view(), name="today"),
-    path("upcoming", views.Upcoming.as_view(), name="upcoming"),
-    path("project/", views.Inbox.as_view(), name="inbox"),
+    re_path("(today)", views.RedirectSearch.as_view(), name="today"),
+    re_path("(upcoming)", views.RedirectSearch.as_view(), name="upcoming"),
+    re_path("(inbox)", views.RedirectProject.as_view(), name="inbox"),
+
+    # path("project/", views.Inbox.as_view(), name="inbox"),
     path("project/<uuid>", views.Project.as_view(), name="project"),
     path("search/<uuid>", views.Search.as_view(), name="search"),
     path("task/new", views.TaskAdd.as_view(), name="task-add"),

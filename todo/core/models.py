@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 
 
 class Task(models.Model):
@@ -56,6 +57,7 @@ class Project(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     public = models.BooleanField(default=False)
+    createdOn = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return ":".join([self.title, self.owner.username])
@@ -69,6 +71,7 @@ class Search(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     data = models.TextField()
+    createdOn = models.DateTimeField(default=timezone.now)
 
     def get_absolute_url(self):
         return reverse("search", kwargs={"uuid": self.uuid})

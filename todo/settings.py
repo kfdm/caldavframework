@@ -125,7 +125,8 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.environ.get("STATIC_ROOT")
 
-LOGIN_REDIRECT_URL = reverse_lazy("inbox")
+LOGIN_REDIRECT_URL = reverse_lazy("about")
+LOGOUT_REDIRECT_URL = reverse_lazy("about")
 
 
 if DEBUG:

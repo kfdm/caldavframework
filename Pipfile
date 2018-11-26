@@ -21,6 +21,7 @@ icalendar = "*"
 django-debug-toolbar = "*"
 docutils = "*"
 black = "==18.9b0"
+"flake8" = "*"
 
 [requires]
 python_version = "3.6"

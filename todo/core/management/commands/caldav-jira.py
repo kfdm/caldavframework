@@ -1,18 +1,12 @@
 import configparser
 import logging
 import os
-from pprint import pprint
 
 import icalendar
 import requests
 from dateutil.parser import parse
-from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
-from django.urls import reverse
-from rest_framework.authtoken.models import Token
 from todo import CONFIG_DIR
-from todo.core.models import Task
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

@@ -57,7 +57,7 @@ class Command(BaseCommand):
                     "{}/github/{}/{}.ics".format(
                         config["DEFAULTS"]["server"],
                         config[section]["calendar"].upper(),
-                        issue["id"],
+                        event["uid"],
                     ),
                     auth=caldav,
                     data=cal.to_ical(),

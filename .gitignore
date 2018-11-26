@@ -1,2 +1,5 @@
-todo.egg-info
 __pycache__
+*.egg-info
+*.sqlite3
+build
+dist

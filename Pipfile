@@ -20,6 +20,7 @@ icalendar = "*"
 [dev-packages]
 django-debug-toolbar = "*"
 docutils = "*"
+black = "==18.9b0"
 
 [requires]
 python_version = "3.6"

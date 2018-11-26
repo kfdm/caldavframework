@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Import projects from GitHub"
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument("repos", nargs='+')
+
+    def handle(self, repos, **options):
         config = configparser.ConfigParser()
         with open(os.path.join(CONFIG_DIR, "todo-sync.ini")) as fp:
             config.readfp(fp)
@@ -24,12 +27,10 @@ class Command(BaseCommand):
         gh = {"Authorization": "token %s" % config["DEFAULTS"]["token"]}
         caldav = ("github", config["DEFAULTS"]["password"])
 
-        for section in config._sections:
-            if section == "DEFAULTS":
-                continue
+        for repo in repos:
 
             gh_request = requests.get(
-                "https://api.github.com/repos/%s/issues" % section,
+                "https://api.github.com/repos/%s/issues" % repo,
                 headers=gh,
                 params={"state": "all"},
             )
@@ -56,7 +57,7 @@ class Command(BaseCommand):
                 result = requests.put(
                     "{}/github/{}/{}.ics".format(
                         config["DEFAULTS"]["server"],
-                        config[section]["calendar"].upper(),
+                        config[repo]["calendar"].upper(),
                         event["uid"],
                     ),
                     auth=caldav,

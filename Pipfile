@@ -4,7 +4,6 @@ name = "pypi"
 verify_ssl = true
 
 [packages]
-django = "*"
 "todo" = {path = ".", editable = true}
 djangorestframework = "==3.8.2"
 pytz = "*"

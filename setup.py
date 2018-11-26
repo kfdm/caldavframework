@@ -9,7 +9,7 @@ setup(
         "coreapi",
         "dj-database-url==0.4.2",
         "django-rest-swagger",
-        "Django==2.0.6",
+        "Django==2.1.3",
         "djangorestframework==3.8.2",
         "envdir==1.0.1",
         "icalendar",

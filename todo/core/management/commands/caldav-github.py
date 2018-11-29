@@ -20,10 +20,10 @@ class Command(BaseCommand):
         parser.add_argument("repos", nargs="+")
 
     def new_issue(self, issue):
-        logger.info("New GitHub->CalDav #%s %s", issue["number"], issue["title"])
         vTodo = icalendar.Todo()
         vTodo["uid"] = issue["id"]
         vTodo.add("X-GITHUB-ISSUE", issue["id"])
+        vTodo.add("url", issue["html_url"])
         vTodo.add("summary", "#{number} {title}".format(**issue))
         vTodo.add("description", "{html_url}\n{body}".format(**issue))
         if issue["closed_at"]:
@@ -33,16 +33,15 @@ class Command(BaseCommand):
         return vTodo
 
     def old_issue(self, issue, vTodo):
-        logger.info("Update GitHub->CalDav #%s %s", issue["number"], issue["title"])
-        for k in ["summary", "description", "completed", "status", "dtstart"]:
-            vTodo.pop(k)
+        newTodo = self.new_issue(issue)
 
-        vTodo.add("summary", "#{number} {title}".format(**issue))
-        vTodo.add("description", "{html_url}\n{body}".format(**issue))
-        if issue["closed_at"]:
-            vTodo.add("completed", parse(issue["closed_at"]))
-            vTodo.add("status", "completed")
-        vTodo.add("dtstart", parse(issue["created_at"]))
+        for k in ["summary", "description", "completed", "status", "dtstart", "url"]:
+            if k in newTodo:
+                # TODO: Push any updated values to GitHub
+                vTodo[k] = newTodo[k]
+        if "SEQUENCE" in vTodo:
+            vTodo["SEQUENCE"] += 1
+
         return vTodo
 
     def fetch_caldav(self, config, repo):
@@ -71,7 +70,7 @@ class Command(BaseCommand):
         return gh_request.json()
 
     def push_github(self, vTodo):
-        logger.warn("New CalDav->GitHub %s", vTodo.decoded("summary").decode("utf8"))
+
         # TODO: Finish push_to_github
         return vTodo
 
@@ -82,13 +81,22 @@ class Command(BaseCommand):
         for issue in self.fetch_github(config, repo):
             # Update our existing issues from CalDav
             if issue["id"] in old_caldav:
+                logger.info(
+                    "Old GitHub->CalDav #%s %s", issue["number"], issue["title"]
+                )
                 yield self.old_issue(issue, old_caldav[issue["id"]])
             # Add our new issues to CalDav
             else:
+                logger.info(
+                    "New GitHub->CalDav #%s %s", issue["number"], issue["title"]
+                )
                 yield self.new_issue(issue)
 
         for vObject in new_caldav:
             # Push the new object to Gihub and return with the Github ID
+            logger.warn(
+                "New CalDav->GitHub %s", vObject.decoded("summary").decode("utf8")
+            )
             yield self.push_github(vObject)
 
     def handle(self, repos, verbosity, **options):

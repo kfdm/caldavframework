@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = "Import projects from GitHub"
+    headers = {
+        "user-agent": "todo-server/github-sync https://github.com/kfdm/todo-server"
+    }
 
     def add_arguments(self, parser):
         parser.add_argument("repos", nargs="+")
@@ -46,7 +49,9 @@ class Command(BaseCommand):
 
     def fetch_caldav(self, config, repo):
         caldav = ("github", config["DEFAULTS"]["password"])
-        cal_request = requests.get(config[repo]["calendar"], auth=caldav)
+        cal_request = requests.get(
+            config[repo]["calendar"], auth=caldav, headers=self.headers
+        )
         cal_request.raise_for_status()
         calendar = icalendar.Calendar.from_ical(cal_request.text)
 
@@ -61,6 +66,7 @@ class Command(BaseCommand):
 
     def fetch_github(self, config, repo):
         gh = {"Authorization": "token %s" % config["DEFAULTS"]["token"]}
+        gh.update(self.headers)
         gh_request = requests.get(
             "https://api.github.com/repos/%s/issues" % repo,
             headers=gh,
@@ -125,6 +131,7 @@ class Command(BaseCommand):
                     "{}/{}.ics".format(config[repo]["calendar"], todo["uid"]),
                     auth=caldav,
                     data=cal.to_ical(),
+                    headers=self.headers,
                 )
                 # print(result.text)
                 result.raise_for_status()

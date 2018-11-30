@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Import projects from JIRA"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--maxResults", type=int, default=50, help="Number of JIRA issues to query"
+        )
+
     def handle(self, verbosity, **options):
         if verbosity > 1:
             logging.root.setLevel(logging.INFO)
@@ -28,7 +33,7 @@ class Command(BaseCommand):
 
         caldav = (config["DEFAULTS"]["user"], config["DEFAULTS"]["password"])
 
-        for project, todo in self.process(config):
+        for project, todo in self.process(config, **options):
             cal = icalendar.Calendar()
             cal["version"] = "2.0"
             cal["prodid"] = "test"
@@ -65,8 +70,8 @@ class Command(BaseCommand):
                     new_issue[section].append(i)
         return new_issue, old_issue
 
-    def fetch_jira(self, config):
-        query = "updated >= -30d AND assignee in (currentUser())"
+    def fetch_jira(self, config, maxResults, **kwargs):
+        query = "updated >= -30d AND assignee in (currentUser()) ORDER BY updated DESC"
 
         url = "{}/rest/api/latest/search".format(os.environ.get("JIRA_URL"))
         response = requests.post(
@@ -74,6 +79,7 @@ class Command(BaseCommand):
             auth=(os.environ.get("JIRA_USER"), os.environ.get("JIRA_PASSWORD")),
             json={
                 "jql": query,
+                "maxResults": maxResults,
                 "fields": [
                     "components",
                     "created",
@@ -92,19 +98,25 @@ class Command(BaseCommand):
         for issue in response.json().get("issues", {}):
             yield issue
 
-    def process(self, config):
+    def process(self, config, **kwargs):
         projects = [s for s in config._sections if s != "DEFAULTS"]
         # Fetch our old issues so that we can compare them
         new_caldav, old_caldav = self.fetch_caldav(config, projects)
 
         # Loop through our JIRA issues
-        for issue in self.fetch_jira(config):
+        for issue in self.fetch_jira(config, **kwargs):
             project = issue["fields"]["project"]["key"]
             issue_id = int(issue["id"])
 
             if issue_id in old_caldav[project]:
+                logger.info(
+                    "Old JIRA->CalDav #%s %s", issue["key"], issue["fields"]["summary"]
+                )
                 yield project, self.old_issue(issue, old_caldav[project][issue_id])
             else:
+                logger.info(
+                    "New JIRA->CalDav #%s %s", issue["key"], issue["fields"]["summary"]
+                )
                 yield project, self.new_issue(issue)
 
         for project in new_caldav:
@@ -112,7 +124,6 @@ class Command(BaseCommand):
                 yield project, self.push_jira(vObject)
 
     def new_issue(self, issue):
-        logger.info("New JIRA->CalDav #%s %s", issue["key"], issue["fields"]["summary"])
         event = icalendar.Todo()
         event["uid"] = issue["id"]
         event["summary"] = "{} {}".format(issue["key"], issue["fields"]["summary"])
@@ -138,11 +149,9 @@ class Command(BaseCommand):
         event.add("X-JIRA-ISSUE", issue["id"])
         event.add("X-JIRA-KEY", issue["key"])
         event.add("X-JIRA-PROJECT", issue["fields"]["project"]["key"])
-
         return event
 
     def old_issue(self, issue, vObject):
-        logger.info("Old JIRA->CalDav #%s %s", issue["key"], issue["fields"]["summary"])
         # TODO: Update object
         return vObject
 

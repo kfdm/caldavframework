@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = "Import projects from JIRA"
+    headers = {"user-agent": "todo-server/ https://github.com/kfdm/todo-server"}
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -46,6 +47,7 @@ class Command(BaseCommand):
                 "{}/{}.ics".format(config[project]["calendar"], todo["uid"]),
                 auth=caldav,
                 data=cal.to_ical(),
+                headers=self.headers,
             )
             # print(result.text)
             result.raise_for_status()
@@ -57,7 +59,9 @@ class Command(BaseCommand):
 
         for section in projects:
             caldav = (config["DEFAULTS"]["user"], config["DEFAULTS"]["password"])
-            cal_request = requests.get(config[section]["calendar"], auth=caldav)
+            cal_request = requests.get(
+                config[section]["calendar"], auth=caldav, headers=self.headers
+            )
             cal_request.raise_for_status()
             calendar = icalendar.Calendar.from_ical(cal_request.text)
 
@@ -92,6 +96,7 @@ class Command(BaseCommand):
                     "summary",
                 ],
             },
+            headers=self.headers,
         )
         response.raise_for_status()
 
@@ -131,6 +136,7 @@ class Command(BaseCommand):
             "{}/browse/{}".format(os.environ.get("JIRA_URL"), issue["key"]),
             issue["fields"]["description"],
         )
+        event["url"] = "{}/browse/{}".format(os.environ.get("JIRA_URL"), issue["key"])
 
         event.add("dtstart", parse(issue["fields"]["created"]))
 
@@ -151,9 +157,17 @@ class Command(BaseCommand):
         event.add("X-JIRA-PROJECT", issue["fields"]["project"]["key"])
         return event
 
-    def old_issue(self, issue, vObject):
-        # TODO: Update object
-        return vObject
+    def old_issue(self, issue, vTodo):
+        newTodo = self.new_issue(issue)
+
+        for k in ["summary", "description", "completed", "status", "dtstart", "url"]:
+            if k in newTodo:
+                # TODO: Push any updated values to GitHub
+                vTodo[k] = newTodo[k]
+        # Update our alarms
+        vTodo.subcomponents = newTodo.subcomponents
+
+        return vTodo
 
     def push_jira(self, vTodo):
         logger.warn("New CalDav->JIRA %s", vTodo.decoded("summary").decode("utf8"))

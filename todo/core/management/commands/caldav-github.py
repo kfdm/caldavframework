@@ -13,12 +13,10 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-class Command(BaseCommand):
-    help = "Import projects from GitHub"
-    headers = {
-        "user-agent": "todo-server/github-sync https://github.com/kfdm/todo-server"
-    }
+USER_AGENT = "todo-server/github-sync https://github.com/kfdm/todo-server"
 
+
+class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("repos", nargs="+")
 
@@ -28,7 +26,7 @@ class Command(BaseCommand):
         vTodo.add("X-GITHUB-ISSUE", issue["id"])
         vTodo.add("url", issue["html_url"])
         vTodo.add("summary", "#{number} {title}".format(**issue))
-        vTodo.add("description", "{html_url}\n{body}".format(**issue))
+        vTodo.add("description", issue["body"])
         if issue["closed_at"]:
             vTodo.add("completed", parse(issue["closed_at"]))
             vTodo.add("status", "completed")
@@ -47,11 +45,22 @@ class Command(BaseCommand):
 
         return vTodo
 
-    def fetch_caldav(self, config, repo):
-        caldav = ("github", config["DEFAULTS"]["password"])
-        cal_request = requests.get(
-            config[repo]["calendar"], auth=caldav, headers=self.headers
+    def push_github(self, vTodo, config, repo):
+        gh_request = self.gh.post(
+            "https://api.github.com/repos/%s/issues" % repo,
+            json={
+                "title": vTodo.decoded("summary"),
+                "body": vTodo.decoded("description", ""),
+            },
         )
+        gh_request.raise_for_status()
+        issue = gh_request.json()
+        vTodo.add("X-GITHUB-ISSUE", issue["id"])
+
+        return self.old_issue(issue, vTodo)
+
+    def fetch_caldav(self, config, repo):
+        cal_request = self.caldav.get(config[repo]["calendar"])
         cal_request.raise_for_status()
         calendar = icalendar.Calendar.from_ical(cal_request.text)
 
@@ -65,20 +74,11 @@ class Command(BaseCommand):
         return new_issue, old_issue
 
     def fetch_github(self, config, repo):
-        gh = {"Authorization": "token %s" % config["DEFAULTS"]["token"]}
-        gh.update(self.headers)
-        gh_request = requests.get(
-            "https://api.github.com/repos/%s/issues" % repo,
-            headers=gh,
-            params={"state": "all"},
+        gh_request = self.gh.get(
+            "https://api.github.com/repos/%s/issues" % repo, params={"state": "all"}
         )
         gh_request.raise_for_status()
         return gh_request.json()
-
-    def push_github(self, vTodo):
-
-        # TODO: Finish push_to_github
-        return vTodo
 
     def process(self, config, repo):
         # Fetch our old issues so that we can compare them
@@ -100,10 +100,10 @@ class Command(BaseCommand):
 
         for vObject in new_caldav:
             # Push the new object to Gihub and return with the Github ID
-            logger.warn(
+            logger.info(
                 "New CalDav->GitHub %s", vObject.decoded("summary").decode("utf8")
             )
-            yield self.push_github(vObject)
+            yield self.push_github(vObject, config, repo)
 
     def handle(self, repos, verbosity, **options):
         if verbosity == 2:
@@ -115,7 +115,15 @@ class Command(BaseCommand):
         with open(os.path.join(CONFIG_DIR, "todo-sync.ini")) as fp:
             config.readfp(fp)
 
-        caldav = ("github", config["DEFAULTS"]["password"])
+        self.caldav = requests.session()
+        self.caldav.auth = ("github", config["DEFAULTS"]["password"])
+        self.caldav.headers = {"user-agent": USER_AGENT}
+
+        self.gh = requests.session()
+        self.gh.headers = {
+            "Authorization": "token %s" % config["DEFAULTS"]["token"],
+            "user-agent": USER_AGENT,
+        }
 
         for repo in repos:
             logging.info("Processing %s", repo)
@@ -127,11 +135,9 @@ class Command(BaseCommand):
 
                 # print(cal.to_ical().decode("utf8"))
 
-                result = requests.put(
+                result = self.caldav.put(
                     "{}/{}.ics".format(config[repo]["calendar"], todo["uid"]),
-                    auth=caldav,
                     data=cal.to_ical(),
-                    headers=self.headers,
                 )
                 # print(result.text)
                 result.raise_for_status()

@@ -1,12 +1,15 @@
 import configparser
 import logging
 import os
+import subprocess
+from urllib.parse import urlparse
 
 from django.core.management.base import BaseCommand
 
 import icalendar
 import requests
 from dateutil.parser import parse
+
 from todo import CONFIG_DIR
 
 logging.basicConfig(level=logging.WARNING)
@@ -17,8 +20,24 @@ USER_AGENT = "todo-server/github-sync https://github.com/kfdm/todo-server"
 
 
 class Command(BaseCommand):
+    @property
+    def default_repos(self):
+        output = (
+            subprocess.check_output(["git", "config", "remote.origin.url"])
+            .decode("utf8")
+            .strip()
+        )
+        url = urlparse(output)
+        if url.path.startswith("git@"):
+            # Remove git@github.com
+            _, repo = url.path.split(":", 1)
+            # And return without .git
+            return [repo.split(".")[0]]
+        raise Exception("unknown url" + output)
+        return []
+
     def add_arguments(self, parser):
-        parser.add_argument("repos", nargs="+")
+        parser.add_argument("repos", nargs="?", default=self.default_repos)
 
     def new_issue(self, issue):
         vTodo = icalendar.Todo()

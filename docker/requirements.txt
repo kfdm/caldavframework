@@ -1,0 +1,10 @@
+-i https://pypi.org/simple
+-e .[standalone]
+#django==2.2.10
+django-environ==0.4.5
+gunicorn==19.9.0
+icalendar==4.0.3
+prometheus-client
+python-dateutil==2.8.0
+pytz==2019.2
+sentry-sdk==0.12.2

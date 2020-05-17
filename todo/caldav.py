@@ -73,7 +73,32 @@ class Calendar:
         ele = ET.Element(prop)
 
         if prop == "{DAV:}displayname":
-            self.calendar.name = value
+            ele.text = self.calendar.name
+            return 200, ele
+
+        if prop == "{DAV:}current-user-privilege-set":
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}all")
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write")
+            ET.SubElement(
+                ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-properties"
+            )
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-content")
+            return 200, ele
+
+        if prop == "{DAV:}owner":
+            ET.SubElement(ele, "{DAV:}href").text = reverse(
+                "principal", kwargs={"user": self.calendar.owner.username}
+            )
+            return 200, ele
+
+        if prop == "{DAV:}resourcetype":
+            ET.SubElement(ele, "{urn:ietf:params:xml:ns:caldav}calendar")
+            ET.SubElement(ele, "collection")
+            return 200, ele
+
+        if prop == "{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set":
+            ET.SubElement(ele, "{urn:ietf:params:xml:ns:caldav}comp", {"name": "VTODO"})
             return 200, ele
 
         logger.debug("unknown propfind %s for calendar %s ", prop, self.calendar)

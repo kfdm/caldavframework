@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView, Response
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, reverse
 from django.views.generic import RedirectView, TemplateView
 
 from todo import caldav, models
@@ -57,8 +57,14 @@ class RootCollection(CaldavView):
 
         if request.headers["Depth"] == "1":
             for c in models.Calendar.objects.filter(owner=request.user):
-                response = multi.sub_response("/path/to/%s" % c.id)
-                calendar = caldav.Calendar(c)
+                propstats = multi.propstat(
+                    reverse("calendar", kwargs={"user": user, "calendar": c.id})
+                )
+                collection = caldav.Calendar(c)
+                for prop, value in request.data.get("{DAV:}prop", {}).items():
+                    status, value = collection.propfind(request, prop, value)
+                    propstats[status].append(value)
+                propstats.render(request)
 
         return multi
 
@@ -77,26 +83,44 @@ class RootCollection(CaldavView):
 
 
 class Calendar(CaldavView):
-    http_method_names = ["options", "mkcalendar", "proppatch", "delete"]
+    http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind"]
 
     def delete(self, request, user, calendar):
-        calendar = get_object_or_404(models, Calendar, owner=request.user, id=calendar)
-        return HttpResponse(status=400)
+        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
+        calendar.delete()
+        return HttpResponse(status=204)
+
+    def propfind(self, request, user, calendar):
+        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
+        collection = caldav.Calendar(calendar)
+
+        multi = caldav.MultistatusResponse()
+        propstats = multi.propstat(request.path)
+
+        for prop, value in request.data.get("{DAV:}prop", {}).items():
+            status, result = collection.propfind(request, prop, value)
+            propstats[status].append(result)
+        propstats.render(request)
+
+        return multi
 
     def proppatch(self, request, user, calendar):
-        calendar = get_object_or_404(models, Calendar, owner=request.user, id=calendar)
+        multi = caldav.MultistatusResponse()
+        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
+        collection = caldav.Calendar(calendar)
 
-        propstats = caldav.Propstats()
+        propstats = multi.propstat(request.path)
         set_request = request.data.get("{DAV:}set", {})
 
         for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = caldav.proppatch(request, prop, value, calendar)
+            status, result = collection.proppatch(request, prop, value)
             propstats[status].append(result)
+        propstats.render(request)
 
         if propstats[200]:
             calendar.save()
 
-        return propstats.render(request)
+        return multi
 
     def mkcalendar(self, request, user, calendar):
         calendar = models.Calendar(owner=request.user, id=calendar)

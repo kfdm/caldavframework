@@ -5,4 +5,4 @@ from django.contrib import admin
 
 @admin.register(models.Calendar)
 class CalendarAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("name", "owner")

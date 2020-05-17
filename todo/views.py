@@ -35,29 +35,23 @@ class CaldavView(APIView):
 
 class Principal(CaldavView):
     http_method_names = ["options", "propfind"]
+    # DELETE, GET, HEAD, MKCALENDAR, MKCOL, MOVE, OPTIONS, PROPFIND, PROPPATCH, PUT, REPORT
 
-    def propfind(self, request):
-        pass
+    def propfind(self, request, user):
+        propstats = caldav.Propstats()
+        for prop in request.data["{DAV:}prop"]:
+            status, value = caldav.propfind(prop, request)
+            propstats[status].append(value)
+        return propstats.render(request)
 
 
 class Discovery(CaldavView):
     http_method_names = ["options", "propfind"]
 
     def propfind(self, request):
-        propstats = defaultdict(list)
+        propstats = caldav.Propstats()
         for prop in request.data["{DAV:}prop"]:
             status, value = caldav.propfind(prop, request)
             propstats[status].append(value)
 
-        multistatus = ET.Element("{DAV:}multistatus")
-        response = ET.SubElement(multistatus, "{DAV:}response")
-        ET.SubElement(response, "{DAV:}href").text = request.path
-
-        for status in propstats:
-            propstat = ET.SubElement(response, "{DAV:}propstat")
-            prop = ET.SubElement(propstat, "{DAV:}prop")
-            for element in propstats[status]:
-                prop.append(element)
-            ET.SubElement(propstat, "{DAV:}status").text = caldav.status(status)
-
-        return caldav.CaldavResponse(multistatus, status=207)
+        return propstats.render(request)

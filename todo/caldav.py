@@ -1,7 +1,8 @@
+import collections
 import xml.etree.ElementTree as ET
 
-from django.urls import reverse
 from django.http import HttpResponse
+from django.urls import reverse
 
 ET.register_namespace("DAV:", "")
 
@@ -24,7 +25,29 @@ def propfind(prop, request):
         ele = ET.Element(prop)
         ET.SubElement(ele, "{DAV:}collection")
         return 200, ele
+    print("unknown prop", prop)
     return 404, ET.Element(prop)
+
+
+class Propstats:
+    def __init__(self):
+        self.collection = collections.defaultdict(list)
+
+    def __getitem__(self, key):
+        return self.collection[key]
+
+    def render(self, request):
+        multistatus = ET.Element("{DAV:}multistatus")
+        response = ET.SubElement(multistatus, "{DAV:}response")
+        ET.SubElement(response, "{DAV:}href").text = request.path
+
+        for status_code in self.collection:
+            propstat = ET.SubElement(response, "{DAV:}propstat")
+            prop = ET.SubElement(propstat, "{DAV:}prop")
+            for element in self.collection[status_code]:
+                prop.append(element)
+            ET.SubElement(propstat, "{DAV:}status").text = status(status_code)
+        return CaldavResponse(multistatus, status=207)
 
 
 class CaldavResponse(HttpResponse):

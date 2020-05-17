@@ -3,13 +3,12 @@ from collections import defaultdict
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView, Response
-from django.shortcuts import get_object_or_404
+
 from django.http import HttpResponse
-from django.shortcuts import redirect, render, reverse
+from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.views.generic import RedirectView, TemplateView
 
 from todo import caldav, models
-from todo.caldav import ET
 
 
 class WellKnownCaldav(APIView):
@@ -51,7 +50,6 @@ class CaldavView(APIView):
 
 class RootCollection(CaldavView):
     http_method_names = ["options", "propfind", "proppatch", "report", "mkcalendar"]
-    # DELETE, GET, HEAD, MKCALENDAR, MKCOL, MOVE, OPTIONS, PROPFIND, PROPPATCH, PUT, REPORT
 
     def get_driver(self, request, **kwargs):
         return caldav.Collection(request.user)
@@ -59,9 +57,7 @@ class RootCollection(CaldavView):
     def depth(self, request, response, **kwargs):
         for c in models.Calendar.objects.filter(owner=request.user):
             propstats = response.propstat(
-                reverse(
-                    "calendar", kwargs={"user": request.user.username, "calendar": c.id}
-                )
+                resolve_url("calendar", user=request.user.username, calendar=c.id)
             )
             collection = caldav.Calendar(c)
             for prop, value in request.data.get("{DAV:}prop", {}).items():
@@ -70,17 +66,18 @@ class RootCollection(CaldavView):
             propstats.render(request)
 
     def proppatch(self, request, user):
-        propstats = caldav.Propstats()
+        response = caldav.MultistatusResponse()
+
+        propstats = response.propstat(request.path)
         set_request = request.data.get("{DAV:}set", {})
 
+        driver = self.get_driver(request)
         for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = caldav.proppatch(request, prop, value, None)
+            status, result = driver.proppatch(request, prop, value, None)
             propstats[status].append(result)
+        propstats.render(request)
 
-        return propstats.render(request)
-
-    def report(self, request, user):
-        raise NotImplementedError()
+        return response
 
 
 class Calendar(CaldavView):

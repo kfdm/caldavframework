@@ -111,6 +111,10 @@ class Calendar:
             self.calendar.name = value
             return 200, ele
 
+        if prop == "{http://apple.com/ns/ical/}calendar-color":
+            self.calendar.color = value
+            return 200, ele
+
         logger.debug("unknown proppatch %s for calendar %s ", prop, self.calendar)
         return 404, ele
 

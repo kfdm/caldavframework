@@ -156,3 +156,12 @@ class UserPrincipalDiscovery(CaldavView):
         propstats.render(request)
 
         return multi
+
+
+class Task(CaldavView):
+    http_method_names = ["options", "put"]
+
+    def put(self, request, user, calendar, task):
+        data = request.body.decode("utf8")
+        print(data)
+        return HttpResponse(status=201)

@@ -1,10 +1,13 @@
 import collections
 import xml.etree.ElementTree as ET
-
+import logging
 from django.http.response import HttpResponse, HttpResponseBase
 from django.urls import reverse
 
 ET.register_namespace("DAV:", "")
+
+
+logger = logging.getLogger(__name__)
 
 
 class Collection:
@@ -58,7 +61,7 @@ class Collection:
             ET.SubElement(ele, "{DAV:}collection")
             return 200, ele
 
-        print("unknown propfind", prop, "for", self.user)
+        logger.debug("unknown propfind %s for collection %s ", prop, self.user)
         return 404, ele
 
 
@@ -66,24 +69,24 @@ class Calendar:
     def __init__(self, calendar):
         self.calendar = calendar
 
-    def propfind(request, prop, value):
+    def propfind(self, request, prop, value):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}displayname":
-            obj.name = value
+            self.calendar.name = value
             return 200, ele
 
-        print("unknown propfind ", prop, "for", self.calendar)
+        logger.debug("unknown propfind %s for calendar %s ", prop, self.calendar)
         return 404, ele
 
-    def proppatch(request, prop, value):
+    def proppatch(self, request, prop, value):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}displayname":
-            obj.name = value
+            self.calendar.name = value
             return 200, ele
 
-        print("unknown proppatch", prop, "for", self.calendar)
+        logger.debug("unknown proppatch %s for calendar %s ", prop, self.calendar)
         return 404, ele
 
 
@@ -133,7 +136,6 @@ class MultistatusResponse(HttpResponse):
         return Propstats(response)
 
     def render(self):
-        import pdb; pdb.set_trace()
         if not self._is_rendered:
             self.content = "<?xml version='1.0' encoding='utf-8'?>" + ET.tostring(
                 self.__element, encoding="unicode", short_empty_elements=True

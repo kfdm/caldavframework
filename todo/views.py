@@ -46,11 +46,10 @@ class RootCollection(CaldavView):
     # DELETE, GET, HEAD, MKCALENDAR, MKCOL, MOVE, OPTIONS, PROPFIND, PROPPATCH, PUT, REPORT
 
     def propfind(self, request, user):
-        collection = caldav.Collection(request.user)
-
         multi = caldav.MultistatusResponse()
 
         propstats = multi.propstat(request.path)
+        collection = caldav.Collection(request.user)
         for prop, value in request.data.get("{DAV:}prop", {}).items():
             status, value = collection.propfind(request, prop, value)
             propstats[status].append(value)
@@ -101,12 +100,13 @@ class Calendar(CaldavView):
 
     def mkcalendar(self, request, user, calendar):
         calendar = models.Calendar(owner=request.user, id=calendar)
+        collection = caldav.Calendar(calendar)
 
         propstats = caldav.Propstats(None)
         set_request = request.data.get("{DAV:}set", {})
 
         for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = caldav.proppatch(request, prop, value, calendar)
+            status, result = collection.proppatch(request, prop, value)
             propstats[status].append(result)
 
         if propstats[200]:

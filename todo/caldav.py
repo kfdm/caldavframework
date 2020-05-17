@@ -1,10 +1,90 @@
 import collections
 import xml.etree.ElementTree as ET
 
-from django.http import HttpResponse
+from django.http.response import HttpResponse, HttpResponseBase
 from django.urls import reverse
 
 ET.register_namespace("DAV:", "")
+
+
+class Collection:
+    def __init__(self, user):
+        self.user = user
+
+    def propfind(self, request, prop, value):
+        ele = ET.Element(prop)
+
+        if prop == "{DAV:}current-user-principal":
+            ET.SubElement(ele, "{DAV:}href").text = reverse(
+                "principal", kwargs={"user": request.user.username}
+            )
+            return 200, ele
+
+        if prop == "{DAV:}resourcetype":
+            ET.SubElement(ele, "{DAV:}collection")
+            return 200, ele
+
+        if prop == "{DAV:}supported-calendar-component-set":
+            # Return list of calendars
+            return 200, ele
+
+        if prop == "{DAV:}current-user-privilege-set":
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}all")
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write")
+            ET.SubElement(
+                ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-properties"
+            )
+            ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-content")
+            return 200, ele
+
+        if prop == "{DAV:}owner":
+            ET.SubElement(ele, "{DAV:}href").text = reverse(
+                "principal", kwargs={"user": request.user.username}
+            )
+            return 200, ele
+
+        if prop == "{DAV:}supported-report-set":
+            return 200, ele
+
+        if prop == "{urn:ietf:params:xml:ns:caldav}calendar-home-set":
+            ET.SubElement(ele, "{DAV:}href").text = reverse(
+                "principal", kwargs={"user": request.user.username}
+            )
+            return 200, ele
+
+        if prop == "{DAV:}resourcetype":
+            ET.SubElement(ele, "{DAV:}principal")
+            ET.SubElement(ele, "{DAV:}collection")
+            return 200, ele
+
+        print("unknown propfind", prop, "for", self.user)
+        return 404, ele
+
+
+class Calendar:
+    def __init__(self, calendar):
+        self.calendar = calendar
+
+    def propfind(request, prop, value):
+        ele = ET.Element(prop)
+
+        if prop == "{DAV:}displayname":
+            obj.name = value
+            return 200, ele
+
+        print("unknown propfind ", prop, "for", self.calendar)
+        return 404, ele
+
+    def proppatch(request, prop, value):
+        ele = ET.Element(prop)
+
+        if prop == "{DAV:}displayname":
+            obj.name = value
+            return 200, ele
+
+        print("unknown proppatch", prop, "for", self.calendar)
+        return 404, ele
 
 
 def status(code):
@@ -12,66 +92,6 @@ def status(code):
         return "HTTP/1.1 200 OK"
     if code == 404:
         return "HTTP/1.1 404 Not Found"
-
-
-def proppatch(request, prop, value, obj):
-    ele = ET.Element(prop)
-
-    if prop == "{DAV:}displayname":
-        obj.name = value
-        return 200, ele
-
-    print("unknown proppatch", prop)
-    return 404, ele
-
-
-def propfind(request, prop, value, obj=None):
-    ele = ET.Element(prop)
-
-    if prop == "{DAV:}current-user-principal":
-        ET.SubElement(ele, "{DAV:}href").text = reverse(
-            "principal", kwargs={"user": request.user.username}
-        )
-        return 200, ele
-
-    if prop == "{DAV:}resourcetype":
-        ET.SubElement(ele, "{DAV:}collection")
-        return 200, ele
-
-    if prop == "{DAV:}supported-calendar-component-set":
-        # Return list of calendars
-        return 200, ele
-
-    if prop == "{DAV:}current-user-privilege-set":
-        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
-        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}all")
-        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write")
-        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-properties")
-        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-content")
-        return 200, ele
-
-    if prop == "{DAV:}owner":
-        ET.SubElement(ele, "{DAV:}href").text = reverse(
-            "principal", kwargs={"user": request.user.username}
-        )
-        return 200, ele
-
-    if prop == "{DAV:}supported-report-set":
-        return 200, ele
-
-    if prop == "{urn:ietf:params:xml:ns:caldav}calendar-home-set":
-        ET.SubElement(ele, "{DAV:}href").text = reverse(
-            "principal", kwargs={"user": request.user.username}
-        )
-        return 200, ele
-
-    if prop == "{DAV:}resourcetype":
-        ET.SubElement(ele, "{DAV:}principal")
-        ET.SubElement(ele, "{DAV:}collection")
-        return 200, ele
-
-    print("unknown propfind", prop, "for", obj)
-    return 404, ele
 
 
 class Propstats:
@@ -91,31 +111,31 @@ class Propstats:
             ET.SubElement(propstat, "{DAV:}status").text = status(status_code)
 
 
-class Multistatus:
-    def __init__(self):
-        self.multistatus = ET.Element("{DAV:}multistatus")
+class MultistatusResponse(HttpResponse):
+    streaming = False
 
-    def append(self, element):
-        self.multistatus.append(element)
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("content_type", "text/xml; charset=utf-8")
+        kwargs.setdefault("status", 207)
 
-    def propstat(self, href):
-        response = self.response(href)
-        return Propstats(response)
+        super().__init__(*args, **kwargs)
+        self.__element = ET.Element("{DAV:}multistatus")
+        self._is_rendered = False
+        self["DAV"] = "1, 2, 3, calendar-access, addressbook, extended-mkcol"
 
-    def response(self, href):
-        response = ET.SubElement(self.multistatus, "{DAV:}response")
+    def sub_response(self, href):
+        response = ET.SubElement(self.__element, "{DAV:}response")
         ET.SubElement(response, "{DAV:}href").text = href
         return response
 
-    def render(self, request):
-        return CaldavResponse(self.multistatus, status=207)
+    def propstat(self, href):
+        response = self.sub_response(href)
+        return Propstats(response)
 
-
-class CaldavResponse(HttpResponse):
-    def __init__(self, element, *args, **kwargs):
-        kwargs["content"] = "<?xml version='1.0' encoding='utf-8'?>" + ET.tostring(
-            element, encoding="unicode", short_empty_elements=True
-        )
-        kwargs.setdefault("content_type", "text/xml; charset=utf-8")
-        super().__init__(*args, **kwargs)
-        self["DAV"] = "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+    def render(self):
+        import pdb; pdb.set_trace()
+        if not self._is_rendered:
+            self.content = "<?xml version='1.0' encoding='utf-8'?>" + ET.tostring(
+                self.__element, encoding="unicode", short_empty_elements=True
+            )
+        return self

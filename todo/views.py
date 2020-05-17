@@ -32,7 +32,6 @@ class CaldavView(APIView):
         if "{DAV:}set" in self.request.data:
             return self.request.data["{DAV:}set"]["{DAV:}prop"].items()
 
-
     def options(self, request, *args, **kwargs):
         """Handle responding to requests for the OPTIONS HTTP verb."""
         response = HttpResponse()
@@ -47,19 +46,22 @@ class RootCollection(CaldavView):
     # DELETE, GET, HEAD, MKCALENDAR, MKCOL, MOVE, OPTIONS, PROPFIND, PROPPATCH, PUT, REPORT
 
     def propfind(self, request, user):
-        multi = caldav.Multistatus()
-        propstats = multi.propstat(request.path)
+        collection = caldav.Collection(request.user)
 
+        multi = caldav.MultistatusResponse()
+
+        propstats = multi.propstat(request.path)
         for prop, value in request.data.get("{DAV:}prop", {}).items():
-            status, value = caldav.propfind(request, prop, value, request.user)
+            status, value = collection.propfind(request, prop, value)
             propstats[status].append(value)
         propstats.render(request)
 
         if request.headers["Depth"] == "1":
             for c in models.Calendar.objects.filter(owner=request.user):
-                calendar = multi.response("/path/to/%s" % c.id)
+                response = multi.sub_response("/path/to/%s" % c.id)
+                calendar = caldav.Calendar(c)
 
-        return multi.render(request)
+        return multi
 
     def proppatch(self, request, user):
         propstats = caldav.Propstats()
@@ -119,12 +121,14 @@ class UserPrincipalDiscovery(CaldavView):
     http_method_names = ["options", "propfind"]
 
     def propfind(self, request):
-        multi = caldav.Multistatus()
+        root = caldav.Collection(request.user)
+
+        multi = caldav.MultistatusResponse()
         propstats = multi.propstat(request.path)
 
         for prop, value in request.data.get("{DAV:}prop", {}).items():
-            status, result = caldav.propfind(request, prop, value)
+            status, result = root.propfind(request, prop, value)
             propstats[status].append(result)
         propstats.render(request)
 
-        return multi.render(request)
+        return multi

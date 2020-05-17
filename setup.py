@@ -23,6 +23,8 @@ setup(
     ],
     install_requires=[
         "Django>=3.0",
+        "djangorestframework",
+        "djangorestframework-xml",
         "icalendar",
         "python-dateutil",
         "pytz",

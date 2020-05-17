@@ -38,6 +38,10 @@ def propfind(request, prop, value, obj=None):
         ET.SubElement(ele, "{DAV:}collection")
         return 200, ele
 
+    if prop == "{DAV:}supported-calendar-component-set":
+        # Return list of calendars
+        return 200, ele
+
     if prop == "{DAV:}current-user-privilege-set":
         ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
         ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}all")
@@ -71,24 +75,40 @@ def propfind(request, prop, value, obj=None):
 
 
 class Propstats:
-    def __init__(self):
+    def __init__(self, parent):
         self.collection = collections.defaultdict(list)
+        self.parent = parent
 
     def __getitem__(self, key):
         return self.collection[key]
 
     def render(self, request):
-        multistatus = ET.Element("{DAV:}multistatus")
-        response = ET.SubElement(multistatus, "{DAV:}response")
-        ET.SubElement(response, "{DAV:}href").text = request.path
-
         for status_code in self.collection:
-            propstat = ET.SubElement(response, "{DAV:}propstat")
+            propstat = ET.SubElement(self.parent, "{DAV:}propstat")
             prop = ET.SubElement(propstat, "{DAV:}prop")
             for element in self.collection[status_code]:
                 prop.append(element)
             ET.SubElement(propstat, "{DAV:}status").text = status(status_code)
-        return CaldavResponse(multistatus, status=207)
+
+
+class Multistatus:
+    def __init__(self):
+        self.multistatus = ET.Element("{DAV:}multistatus")
+
+    def append(self, element):
+        self.multistatus.append(element)
+
+    def propstat(self, href):
+        response = self.response(href)
+        return Propstats(response)
+
+    def response(self, href):
+        response = ET.SubElement(self.multistatus, "{DAV:}response")
+        ET.SubElement(response, "{DAV:}href").text = href
+        return response
+
+    def render(self, request):
+        return CaldavResponse(self.multistatus, status=207)
 
 
 class CaldavResponse(HttpResponse):

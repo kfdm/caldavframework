@@ -25,6 +25,14 @@ class WellKnownCaldav(APIView):
 
 # https://www.webdavsystem.com/server/creating_caldav_carddav/discovery/#nav_featuressupportdiscovery
 class CaldavView(APIView):
+    @property
+    def propstat(self):
+        if "{DAV:}prop" in self.request.data:
+            return self.request.data["{DAV:}prop"].items()
+        if "{DAV:}set" in self.request.data:
+            return self.request.data["{DAV:}set"]["{DAV:}prop"].items()
+
+
     def options(self, request, *args, **kwargs):
         """Handle responding to requests for the OPTIONS HTTP verb."""
         response = HttpResponse()
@@ -34,16 +42,24 @@ class CaldavView(APIView):
         return response
 
 
-class Principal(CaldavView):
-    http_method_names = ["options", "propfind", "mkcalendar", "put", "proppatch"]
+class RootCollection(CaldavView):
+    http_method_names = ["options", "propfind", "proppatch", "report", "mkcalendar"]
     # DELETE, GET, HEAD, MKCALENDAR, MKCOL, MOVE, OPTIONS, PROPFIND, PROPPATCH, PUT, REPORT
 
     def propfind(self, request, user):
-        propstats = caldav.Propstats()
+        multi = caldav.Multistatus()
+        propstats = multi.propstat(request.path)
+
         for prop, value in request.data.get("{DAV:}prop", {}).items():
             status, value = caldav.propfind(request, prop, value, request.user)
             propstats[status].append(value)
-        return propstats.render(request)
+        propstats.render(request)
+
+        if request.headers["Depth"] == "1":
+            for c in models.Calendar.objects.filter(owner=request.user):
+                calendar = multi.response("/path/to/%s" % c.id)
+
+        return multi.render(request)
 
     def proppatch(self, request, user):
         propstats = caldav.Propstats()
@@ -54,6 +70,9 @@ class Principal(CaldavView):
             propstats[status].append(result)
 
         return propstats.render(request)
+
+    def report(self, request, user):
+        raise NotImplementedError()
 
 
 class Calendar(CaldavView):
@@ -81,7 +100,7 @@ class Calendar(CaldavView):
     def mkcalendar(self, request, user, calendar):
         calendar = models.Calendar(owner=request.user, id=calendar)
 
-        propstats = caldav.Propstats()
+        propstats = caldav.Propstats(None)
         set_request = request.data.get("{DAV:}set", {})
 
         for prop, value in set_request.get("{DAV:}prop", {}).items():
@@ -100,9 +119,12 @@ class UserPrincipalDiscovery(CaldavView):
     http_method_names = ["options", "propfind"]
 
     def propfind(self, request):
-        propstats = caldav.Propstats()
-        for prop,value in request.data.get("{DAV:}prop", {}).items():
+        multi = caldav.Multistatus()
+        propstats = multi.propstat(request.path)
+
+        for prop, value in request.data.get("{DAV:}prop", {}).items():
             status, result = caldav.propfind(request, prop, value)
             propstats[status].append(result)
+        propstats.render(request)
 
-        return propstats.render(request)
+        return multi.render(request)

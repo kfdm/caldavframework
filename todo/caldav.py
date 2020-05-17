@@ -14,19 +14,60 @@ def status(code):
         return "HTTP/1.1 404 Not Found"
 
 
-def propfind(prop, request):
+def proppatch(request, prop, value, obj):
+    ele = ET.Element(prop)
+
+    if prop == "{DAV:}displayname":
+        obj.name = value
+        return 200, ele
+
+    print("unknown proppatch", prop)
+    return 404, ele
+
+
+def propfind(request, prop, value, obj=None):
+    ele = ET.Element(prop)
+
     if prop == "{DAV:}current-user-principal":
-        ele = ET.Element(prop)
         ET.SubElement(ele, "{DAV:}href").text = reverse(
             "principal", kwargs={"user": request.user.username}
         )
         return 200, ele
+
     if prop == "{DAV:}resourcetype":
-        ele = ET.Element(prop)
         ET.SubElement(ele, "{DAV:}collection")
         return 200, ele
-    print("unknown prop", prop)
-    return 404, ET.Element(prop)
+
+    if prop == "{DAV:}current-user-privilege-set":
+        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
+        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}all")
+        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write")
+        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-properties")
+        ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}write-content")
+        return 200, ele
+
+    if prop == "{DAV:}owner":
+        ET.SubElement(ele, "{DAV:}href").text = reverse(
+            "principal", kwargs={"user": request.user.username}
+        )
+        return 200, ele
+
+    if prop == "{DAV:}supported-report-set":
+        return 200, ele
+
+    if prop == "{urn:ietf:params:xml:ns:caldav}calendar-home-set":
+        ET.SubElement(ele, "{DAV:}href").text = reverse(
+            "principal", kwargs={"user": request.user.username}
+        )
+        return 200, ele
+
+    if prop == "{DAV:}resourcetype":
+        ET.SubElement(ele, "{DAV:}principal")
+        ET.SubElement(ele, "{DAV:}collection")
+        return 200, ele
+
+    print("unknown propfind", prop, "for", obj)
+    return 404, ele
 
 
 class Propstats:

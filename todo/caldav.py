@@ -1,6 +1,9 @@
 import collections
-import xml.etree.ElementTree as ET
 import logging
+import xml.etree.ElementTree as ET
+
+import icalendar
+
 from django.http.response import HttpResponse, HttpResponseBase
 from django.urls import reverse
 
@@ -101,6 +104,17 @@ class Calendar:
             ET.SubElement(ele, "{urn:ietf:params:xml:ns:caldav}comp", {"name": "VTODO"})
             return 200, ele
 
+        if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
+            ele.text = to_ical(request, self.calendar)
+            return 200, ele
+
+        if prop == "{DAV:}getcontenttype":
+            ele.text = "text/calendar"
+            return 200, ele
+
+        if prop == "{DAV:}supported-report-set":
+            return 200, ele
+
         logger.debug("unknown propfind %s for calendar %s ", prop, self.calendar)
         return 404, ele
 
@@ -124,6 +138,18 @@ def status(code):
         return "HTTP/1.1 200 OK"
     if code == 404:
         return "HTTP/1.1 404 Not Found"
+
+
+def to_ical(request, calendar):
+    cal = icalendar.Calendar()
+
+    for e in calendar.event_set.all():
+        event = icalendar.Event()
+        event.add("uid", e.id)
+        event.add("summary", e.summary)
+        event.add("created", e.created)
+        cal.add_component(event)
+    return cal.to_ical()
 
 
 class Propstats:

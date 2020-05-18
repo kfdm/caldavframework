@@ -84,8 +84,12 @@ class Calendar(CaldavView):
     http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind"]
 
     def get_driver(self, request, calendar, **kwargs):
-        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
-        return caldav.Calendar(calendar)
+        self.calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
+        return caldav.Calendar(self.calendar)
+
+    def depth(self, request, response, **kwargs):
+        for event in self.calendar.event_set.all():
+            print(event)
 
     def delete(self, request, user, calendar):
         calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)

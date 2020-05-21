@@ -10,6 +10,7 @@ class Calendar(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
     color = models.CharField(max_length=7)
+    order = models.IntegerField(default=0)
 
 
 class Event(models.Model):

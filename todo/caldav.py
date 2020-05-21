@@ -136,6 +136,14 @@ class Calendar(BaseCollection):
         if prop == "{DAV:}supported-report-set":
             return 200, ele
 
+        if prop == "{http://apple.com/ns/ical/}calendar-color":
+            ele.text = self.obj.color
+            return 200, ele
+
+        if prop == "{http://apple.com/ns/ical/}calendar-order":
+            ele.text = str(self.obj.order)
+            return 200, ele
+
         logger.debug("unknown propfind %s for calendar %s ", prop, self.obj)
         return 404, ele
 
@@ -148,6 +156,10 @@ class Calendar(BaseCollection):
 
         if prop == "{http://apple.com/ns/ical/}calendar-color":
             self.obj.color = value
+            return 200, ele
+
+        if prop == "{http://apple.com/ns/ical/}calendar-order":
+            self.obj.order = value
             return 200, ele
 
         logger.debug("unknown proppatch %s for calendar %s ", prop, self.obj)

@@ -5,7 +5,7 @@ from django.contrib import admin
 
 @admin.register(models.Calendar)
 class CalendarAdmin(admin.ModelAdmin):
-    list_display = ("name", "color", "owner")
+    list_display = ("name", "color", "owner", "order")
 
 
 @admin.register(models.Event)

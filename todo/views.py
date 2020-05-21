@@ -63,7 +63,6 @@ class RootCollection(CaldavView):
             driver.propfind(request, response, href)
 
 
-
 class Calendar(CaldavView):
     http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind", "report"]
 
@@ -107,7 +106,7 @@ class Calendar(CaldavView):
 
         return multi
 
-    def report(self, request,**kwargs):
+    def report(self, request, **kwargs):
         return HttpResponse(status=500)
 
     def mkcalendar(self, request, user, calendar):

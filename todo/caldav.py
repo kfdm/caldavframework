@@ -6,6 +6,7 @@ import icalendar
 
 from django.http.response import HttpResponse, HttpResponseBase
 from django.urls import reverse
+from django.utils.crypto import get_random_string
 
 ET.register_namespace("DAV:", "")
 
@@ -13,9 +14,17 @@ ET.register_namespace("DAV:", "")
 logger = logging.getLogger(__name__)
 
 
+
 class BaseCollection:
     def __init__(self, obj):
         self.obj = obj
+
+    def report(self, request, response, href):
+        propstats = response.propstat(href)
+        for prop, value in request.data.get("{DAV:}prop", {}).items():
+            status, value = self._report(request, prop, value)
+            propstats[status].append(value)
+        propstats.render(request)
 
     def propfind(self, request, response, href):
         propstats = response.propstat(href)
@@ -48,8 +57,8 @@ class RootCollection(BaseCollection):
             ET.SubElement(ele, "{DAV:}collection")
             return 200, ele
 
-        if prop == "{DAV:}supported-calendar-component-set":
-            # Return list of calendars
+        if prop == "{DAV:}getetag":
+            ele.text = get_random_string()
             return 200, ele
 
         if prop == "{DAV:}current-user-privilege-set":
@@ -93,8 +102,25 @@ class RootCollection(BaseCollection):
 
 
 class Calendar(BaseCollection):
+    def _report(self, request, prop, value):
+        ele = ET.Element(prop)
+
+        if prop == "{DAV:}getetag":
+            ele.text = get_random_string()
+            return 200, ele
+
+        if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
+            ele.text = self.to_ical(request, self.obj).decode("utf8")
+            return 200, ele
+
+        return 404, ele
+
     def _propfind(self, request, prop, value):
         ele = ET.Element(prop)
+
+        if prop == "{DAV:}getetag":
+            ele.text = get_random_string()
+            return 200, ele
 
         if prop == "{DAV:}displayname":
             ele.text = self.obj.name
@@ -180,6 +206,10 @@ class Calendar(BaseCollection):
 class Task(BaseCollection):
     def _propfind(self, request, prop, value):
         ele = ET.Element(prop)
+
+        if prop == "{DAV:}getetag":
+            ele.text = get_random_string()
+            return 200, ele
 
         if prop == "{DAV:}getcontenttype":
             ele.text = "text/calendar;charset=utf-8;component=VTODO"

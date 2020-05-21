@@ -43,6 +43,12 @@ class CaldavView(APIView):
 
         return response
 
+    def report(self, request, **kwargs):
+        response = caldav.MultistatusResponse()
+        driver = self.get_driver(request, **kwargs)
+        driver.report(request, response, request.path)
+        return response
+
     def proppatch(self, request, user):
         response = caldav.MultistatusResponse()
         driver = self.get_driver(request)
@@ -105,9 +111,6 @@ class Calendar(CaldavView):
             calendar.save()
 
         return multi
-
-    def report(self, request, **kwargs):
-        return HttpResponse(status=500)
 
     def mkcalendar(self, request, user, calendar):
         calendar = models.Calendar(owner=request.user, id=calendar)

@@ -53,6 +53,12 @@ class Collection:
         if prop == "{DAV:}supported-report-set":
             return 200, ele
 
+        if prop == "{urn:ietf:params:xml:ns:caldav}calendar-user-address-set":
+            ET.SubElement(ele, "{DAV:}href").text = reverse(
+                "principal", kwargs={"user": request.user.username}
+            )
+            return 200, ele
+
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-home-set":
             ET.SubElement(ele, "{DAV:}href").text = reverse(
                 "principal", kwargs={"user": request.user.username}
@@ -105,7 +111,7 @@ class Calendar:
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            ele.text = to_ical(request, self.calendar)
+            ele.text = self.to_ical(request, self.calendar)
             return 200, ele
 
         if prop == "{DAV:}getcontenttype":
@@ -132,24 +138,37 @@ class Calendar:
         logger.debug("unknown proppatch %s for calendar %s ", prop, self.calendar)
         return 404, ele
 
+    def to_ical(self, request, calendar):
+        cal = icalendar.Calendar()
+
+        for e in calendar.event_set.all():
+            event = icalendar.Event()
+            event.add("uid", e.id)
+            event.add("summary", e.summary)
+            event.add("created", e.created)
+            cal.add_component(event)
+        return cal.to_ical()
+
+
+class Task:
+    def __init__(self, task):
+        self.task = task
+
+    def propfind(self, request, prop, value):
+        ele = ET.Element(prop)
+        
+        if prop == "{DAV:}getcontenttype":
+            ele.text = "text/calendar"
+            return 200, ele
+
+        return 404, ele
+
 
 def status(code):
     if code == 200:
         return "HTTP/1.1 200 OK"
     if code == 404:
         return "HTTP/1.1 404 Not Found"
-
-
-def to_ical(request, calendar):
-    cal = icalendar.Calendar()
-
-    for e in calendar.event_set.all():
-        event = icalendar.Event()
-        event.add("uid", e.id)
-        event.add("summary", e.summary)
-        event.add("created", e.created)
-        cal.add_component(event)
-    return cal.to_ical()
 
 
 class Propstats:

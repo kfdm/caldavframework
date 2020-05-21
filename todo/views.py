@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import icalendar
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView, Response
@@ -84,12 +85,26 @@ class Calendar(CaldavView):
     http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind"]
 
     def get_driver(self, request, calendar, **kwargs):
-        self.calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
+        self.calendar = get_object_or_404(
+            models.Calendar, owner=request.user, id=calendar
+        )
         return caldav.Calendar(self.calendar)
 
     def depth(self, request, response, **kwargs):
         for event in self.calendar.event_set.all():
-            print(event)
+            driver = collection = caldav.Task(event)
+            propstats = response.propstat(
+                resolve_url(
+                    "task",
+                    user=request.user.username,
+                    calendar=event.calendar_id,
+                    task=event.id,
+                )
+            )
+            for prop, value in request.data.get("{DAV:}prop", {}).items():
+                status, value = collection.propfind(request, prop, value)
+                propstats[status].append(value)
+            propstats.render(request)
 
     def delete(self, request, user, calendar):
         calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
@@ -141,9 +156,19 @@ class UserPrincipalDiscovery(CaldavView):
 
 
 class Task(CaldavView):
-    http_method_names = ["options", "put"]
+    http_method_names = ["options", "put", "delete"]
 
-    def put(self, request, user, calendar, task):
+    def put(self, request, calendar, task, **kwargs):
+        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
         data = request.body.decode("utf8")
-        print(data)
+        for event in icalendar.Calendar.from_ical(data).walk("vtodo"):
+            todo = models.Event()
+            todo.calendar = calendar
+            todo.summary = event.decoded("summary").decode("utf8")
+            todo.created = event.decoded("created")
+            todo.status = event.decoded("status").decode("utf8")
+            todo.save()
         return HttpResponse(status=201)
+
+    def delete(self, request, task, **kwargs):
+        return HttpResponse(status=204)

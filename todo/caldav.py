@@ -13,11 +13,29 @@ ET.register_namespace("DAV:", "")
 logger = logging.getLogger(__name__)
 
 
-class Collection:
-    def __init__(self, user):
-        self.user = user
+class BaseCollection:
+    def __init__(self, obj):
+        self.obj = obj
 
-    def propfind(self, request, prop, value):
+    def propfind(self, request, response, href):
+        propstats = response.propstat(href)
+        for prop, value in request.data.get("{DAV:}prop", {}).items():
+            status, value = self._propfind(request, prop, value)
+            propstats[status].append(value)
+        propstats.render(request)
+
+    def proppatch(self, request, response, href):
+        propstats = response.propstat(href)
+        set_request = request.data.get("{DAV:}set", {})
+
+        for prop, value in set_request.get("{DAV:}prop", {}).items():
+            status, result = self.proppatch(request, prop, value, None)
+            propstats[status].append(result)
+        propstats.render(request)
+
+
+class RootCollection(BaseCollection):
+    def _propfind(self, request, prop, value):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}current-user-principal":
@@ -70,19 +88,16 @@ class Collection:
             ET.SubElement(ele, "{DAV:}collection")
             return 200, ele
 
-        logger.debug("unknown propfind %s for collection %s ", prop, self.user)
+        logger.debug("unknown propfind %s for collection %s ", prop, self.obj)
         return 404, ele
 
 
-class Calendar:
-    def __init__(self, calendar):
-        self.calendar = calendar
-
-    def propfind(self, request, prop, value):
+class Calendar(BaseCollection):
+    def _propfind(self, request, prop, value):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}displayname":
-            ele.text = self.calendar.name
+            ele.text = self.obj.name
             return 200, ele
 
         if prop == "{DAV:}current-user-privilege-set":
@@ -97,7 +112,7 @@ class Calendar:
 
         if prop == "{DAV:}owner":
             ET.SubElement(ele, "{DAV:}href").text = reverse(
-                "principal", kwargs={"user": self.calendar.owner.username}
+                "principal", kwargs={"user": self.obj.owner.username}
             )
             return 200, ele
 
@@ -111,7 +126,7 @@ class Calendar:
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            ele.text = self.to_ical(request, self.calendar)
+            ele.text = self.to_ical(request, self.obj)
             return 200, ele
 
         if prop == "{DAV:}getcontenttype":
@@ -121,21 +136,21 @@ class Calendar:
         if prop == "{DAV:}supported-report-set":
             return 200, ele
 
-        logger.debug("unknown propfind %s for calendar %s ", prop, self.calendar)
+        logger.debug("unknown propfind %s for calendar %s ", prop, self.obj)
         return 404, ele
 
-    def proppatch(self, request, prop, value):
+    def _proppatch(self, request, prop, value):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}displayname":
-            self.calendar.name = value
+            self.obj.name = value
             return 200, ele
 
         if prop == "{http://apple.com/ns/ical/}calendar-color":
-            self.calendar.color = value
+            self.obj.color = value
             return 200, ele
 
-        logger.debug("unknown proppatch %s for calendar %s ", prop, self.calendar)
+        logger.debug("unknown proppatch %s for calendar %s ", prop, self.obj)
         return 404, ele
 
     def to_ical(self, request, calendar):
@@ -150,15 +165,12 @@ class Calendar:
         return cal.to_ical()
 
 
-class Task:
-    def __init__(self, task):
-        self.task = task
-
-    def propfind(self, request, prop, value):
+class Task(BaseCollection):
+    def _propfind(self, request, prop, value):
         ele = ET.Element(prop)
-        
+
         if prop == "{DAV:}getcontenttype":
-            ele.text = "text/calendar"
+            ele.text = "text/calendar;charset=utf-8;component=VTODO"
             return 200, ele
 
         return 404, ele

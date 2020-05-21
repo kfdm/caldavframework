@@ -36,16 +36,17 @@ class CaldavView(APIView):
     def propfind(self, request, **kwargs):
         response = caldav.MultistatusResponse()
         driver = self.get_driver(request, **kwargs)
-
-        propstats = response.propstat(request.path)
-        for prop, value in request.data.get("{DAV:}prop", {}).items():
-            status, value = driver.propfind(request, prop, value)
-            propstats[status].append(value)
-        propstats.render(request)
+        driver.propfind(request, response, request.path)
 
         if request.headers["Depth"] == "1" and hasattr(self, "depth"):
             self.depth(request, response, **kwargs)
 
+        return response
+
+    def proppatch(self, request, user):
+        response = caldav.MultistatusResponse()
+        driver = self.get_driver(request)
+        driver.proppatch(request, response, request.path)
         return response
 
 
@@ -53,36 +54,18 @@ class RootCollection(CaldavView):
     http_method_names = ["options", "propfind", "proppatch", "report", "mkcalendar"]
 
     def get_driver(self, request, **kwargs):
-        return caldav.Collection(request.user)
+        return caldav.RootCollection(request.user)
 
     def depth(self, request, response, **kwargs):
         for c in models.Calendar.objects.filter(owner=request.user):
-            propstats = response.propstat(
-                resolve_url("calendar", user=request.user.username, calendar=c.id)
-            )
-            collection = caldav.Calendar(c)
-            for prop, value in request.data.get("{DAV:}prop", {}).items():
-                status, value = collection.propfind(request, prop, value)
-                propstats[status].append(value)
-            propstats.render(request)
+            driver = caldav.Calendar(c)
+            href = resolve_url("calendar", user=request.user.username, calendar=c.id)
+            driver.propfind(request, response, href)
 
-    def proppatch(self, request, user):
-        response = caldav.MultistatusResponse()
-
-        propstats = response.propstat(request.path)
-        set_request = request.data.get("{DAV:}set", {})
-
-        driver = self.get_driver(request)
-        for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = driver.proppatch(request, prop, value, None)
-            propstats[status].append(result)
-        propstats.render(request)
-
-        return response
 
 
 class Calendar(CaldavView):
-    http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind"]
+    http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind", "report"]
 
     def get_driver(self, request, calendar, **kwargs):
         self.calendar = get_object_or_404(
@@ -92,19 +75,14 @@ class Calendar(CaldavView):
 
     def depth(self, request, response, **kwargs):
         for event in self.calendar.event_set.all():
-            driver = collection = caldav.Task(event)
-            propstats = response.propstat(
-                resolve_url(
-                    "task",
-                    user=request.user.username,
-                    calendar=event.calendar_id,
-                    task=event.id,
-                )
+            driver = caldav.Task(event)
+            href = resolve_url(
+                "task",
+                user=request.user.username,
+                calendar=event.calendar_id,
+                task=event.id,
             )
-            for prop, value in request.data.get("{DAV:}prop", {}).items():
-                status, value = collection.propfind(request, prop, value)
-                propstats[status].append(value)
-            propstats.render(request)
+            driver.propfind(request, response, href)
 
     def delete(self, request, user, calendar):
         calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
@@ -114,13 +92,13 @@ class Calendar(CaldavView):
     def proppatch(self, request, user, calendar):
         multi = caldav.MultistatusResponse()
         calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
-        collection = caldav.Calendar(calendar)
+        driver = caldav.Calendar(calendar)
 
         propstats = multi.propstat(request.path)
         set_request = request.data.get("{DAV:}set", {})
 
         for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = collection.proppatch(request, prop, value)
+            status, result = driver._proppatch(request, prop, value)
             propstats[status].append(result)
         propstats.render(request)
 
@@ -129,15 +107,18 @@ class Calendar(CaldavView):
 
         return multi
 
+    def report(self, request,**kwargs):
+        return HttpResponse(status=500)
+
     def mkcalendar(self, request, user, calendar):
         calendar = models.Calendar(owner=request.user, id=calendar)
-        collection = caldav.Calendar(calendar)
+        driver = caldav.Calendar(calendar)
 
         propstats = caldav.Propstats(None)
         set_request = request.data.get("{DAV:}set", {})
 
         for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = collection.proppatch(request, prop, value)
+            status, result = driver._proppatch(request, prop, value)
             propstats[status].append(result)
 
         if propstats[200]:
@@ -152,7 +133,7 @@ class UserPrincipalDiscovery(CaldavView):
     http_method_names = ["options", "propfind"]
 
     def get_driver(self, request, **kwargs):
-        return caldav.Collection(request.user)
+        return caldav.RootCollection(request.user)
 
 
 class Task(CaldavView):

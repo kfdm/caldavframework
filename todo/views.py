@@ -52,7 +52,7 @@ class CaldavView(APIView):
     def proppatch(self, request, user):
         response = caldav.MultistatusResponse()
         driver = self.get_driver(request)
-        driver.proppatch(request, response, request.path)
+        propstats = driver.proppatch(request, response, request.path)
         return response
 
 
@@ -94,34 +94,20 @@ class Calendar(CaldavView):
         calendar.delete()
         return HttpResponse(status=204)
 
-    def proppatch(self, request, user, calendar):
-        multi = caldav.MultistatusResponse()
-        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
-        driver = caldav.Calendar(calendar)
-
-        propstats = multi.propstat(request.path)
-        set_request = request.data.get("{DAV:}set", {})
-
-        for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = driver._proppatch(request, prop, value)
-            propstats[status].append(result)
-        propstats.render(request)
-
+    def proppatch(self, request, **kwargs):
+        response = caldav.MultistatusResponse()
+        driver = self.get_driver(request, **kwargs)
+        propstats = driver.proppatch(request, response, request.path)
         if propstats[200]:
-            calendar.save()
-
-        return multi
+            self.calendar.save()
+        return response
 
     def mkcalendar(self, request, user, calendar):
         calendar = models.Calendar(owner=request.user, id=calendar)
         driver = caldav.Calendar(calendar)
 
-        propstats = caldav.Propstats(None)
-        set_request = request.data.get("{DAV:}set", {})
-
-        for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = driver._proppatch(request, prop, value)
-            propstats[status].append(result)
+        response = caldav.MultistatusResponse()
+        propstats = driver.proppatch(request, response, request.path)
 
         if propstats[200]:
             calendar.save()
@@ -154,4 +140,4 @@ class Task(CaldavView):
         return HttpResponse(status=201)
 
     def delete(self, request, task, **kwargs):
-        return HttpResponse(status=204)
+        return HttpResponse(status=405)

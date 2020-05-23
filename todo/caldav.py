@@ -27,20 +27,21 @@ class BaseCollection:
                 propstats[status].append(value)
             propstats.render(request)
 
-
     def propfind(self, request, response, href):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}prop").getchildren():
             status, value = self._propfind(request, prop.tag, prop.text)
             propstats[status].append(value)
         propstats.render(request)
+        return propstats
 
     def proppatch(self, request, response, href):
         propstats = response.propstat(href)
-        for prop in request.data.find("{DAV:}prop").getchildren():
-            status, result = self._proppatch(request, prop.tag, prop.text, None)
+        for prop in request.data.find("{DAV:}set").find("{DAV:}prop").getchildren():
+            status, result = self._proppatch(request, prop.tag, prop.text)
             propstats[status].append(result)
         propstats.render(request)
+        return propstats
 
 
 class RootCollection(BaseCollection):
@@ -110,7 +111,7 @@ class Calendar(BaseCollection):
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            todo = self.obj.event_set.get(id=href.split('.')[0].split('/')[-1])
+            todo = self.obj.event_set.get(id=href.split(".")[0].split("/")[-1])
 
             cal = icalendar.Calendar()
             event = icalendar.Todo()
@@ -119,7 +120,7 @@ class Calendar(BaseCollection):
             event.add("created", todo.created)
             cal.add_component(event)
 
-            ele.text =  cal.to_ical().decode('utf8')
+            ele.text = cal.to_ical().decode("utf8")
             return 200, ele
 
         return 404, ele
@@ -199,7 +200,6 @@ class Calendar(BaseCollection):
 
         logger.debug("unknown proppatch %s for calendar %s ", prop, self.obj)
         return 404, ele
-
 
 
 class Task(BaseCollection):

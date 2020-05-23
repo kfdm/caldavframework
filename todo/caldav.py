@@ -14,31 +14,31 @@ ET.register_namespace("DAV:", "")
 logger = logging.getLogger(__name__)
 
 
-
 class BaseCollection:
     def __init__(self, obj):
         self.obj = obj
 
     def report(self, request, response, href):
-        propstats = response.propstat(href)
-        for prop, value in request.data.get("{DAV:}prop", {}).items():
-            status, value = self._report(request, prop, value)
-            propstats[status].append(value)
-        propstats.render(request)
+        query = request.data.find("{DAV:}prop")
+        for href in request.data.findall("{DAV:}href"):
+            propstats = response.propstat(href.text)
+            for prop in query.getchildren():
+                status, value = self._report(request, prop.tag, prop.text, href.text)
+                propstats[status].append(value)
+            propstats.render(request)
+
 
     def propfind(self, request, response, href):
         propstats = response.propstat(href)
-        for prop, value in request.data.get("{DAV:}prop", {}).items():
-            status, value = self._propfind(request, prop, value)
+        for prop in request.data.find("{DAV:}prop").getchildren():
+            status, value = self._propfind(request, prop.tag, prop.text)
             propstats[status].append(value)
         propstats.render(request)
 
     def proppatch(self, request, response, href):
         propstats = response.propstat(href)
-        set_request = request.data.get("{DAV:}set", {})
-
-        for prop, value in set_request.get("{DAV:}prop", {}).items():
-            status, result = self.proppatch(request, prop, value, None)
+        for prop in request.data.find("{DAV:}prop").getchildren():
+            status, result = self._proppatch(request, prop.tag, prop.text, None)
             propstats[status].append(result)
         propstats.render(request)
 
@@ -102,7 +102,7 @@ class RootCollection(BaseCollection):
 
 
 class Calendar(BaseCollection):
-    def _report(self, request, prop, value):
+    def _report(self, request, prop, value, href):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}getetag":
@@ -110,7 +110,16 @@ class Calendar(BaseCollection):
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            ele.text = self.to_ical(request, self.obj).decode("utf8")
+            todo = self.obj.event_set.get(id=href.split('.')[0].split('/')[-1])
+
+            cal = icalendar.Calendar()
+            event = icalendar.Todo()
+            event.add("uid", todo.id)
+            event.add("summary", todo.summary)
+            event.add("created", todo.created)
+            cal.add_component(event)
+
+            ele.text =  cal.to_ical().decode('utf8')
             return 200, ele
 
         return 404, ele
@@ -191,16 +200,6 @@ class Calendar(BaseCollection):
         logger.debug("unknown proppatch %s for calendar %s ", prop, self.obj)
         return 404, ele
 
-    def to_ical(self, request, calendar):
-        cal = icalendar.Calendar()
-
-        for e in calendar.event_set.all():
-            event = icalendar.Event()
-            event.add("uid", e.id)
-            event.add("summary", e.summary)
-            event.add("created", e.created)
-            cal.add_component(event)
-        return cal.to_ical()
 
 
 class Task(BaseCollection):

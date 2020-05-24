@@ -1,17 +1,13 @@
-from collections import defaultdict
 
-import icalendar
-from rest_framework import status
+
 from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView, Response
+from rest_framework.views import APIView
 
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render, resolve_url
-from django.urls import resolve, reverse
+from django.shortcuts import get_object_or_404, redirect, resolve_url
 from django.utils.functional import cached_property
-from django.views.generic import RedirectView, TemplateView
 
 from todo import caldav, models, parsers
+from todo.response import HttpResponse, MultistatusResponse
 
 
 class WellKnownCaldav(APIView):
@@ -52,7 +48,7 @@ class CaldavView(APIView):
         return response
 
     def propfind(self, request, **kwargs):
-        response = caldav.MultistatusResponse()
+        response = MultistatusResponse()
         self.driver.propfind(request, response, request.path)
 
         if request.headers["Depth"] == "1" and hasattr(self, "depth"):
@@ -61,12 +57,12 @@ class CaldavView(APIView):
         return response
 
     def report(self, request, **kwargs):
-        response = caldav.MultistatusResponse()
+        response = MultistatusResponse()
         self.driver.report(request, response, request.path)
         return response
 
     def proppatch(self, request, user):
-        response = caldav.MultistatusResponse()
+        response = MultistatusResponse()
         self.driver.proppatch(request, response, request.path)
         return response
 
@@ -116,14 +112,14 @@ class Calendar(CaldavView):
         return HttpResponse(status=204)
 
     def proppatch(self, request, **kwargs):
-        response = caldav.MultistatusResponse()
+        response = MultistatusResponse()
         propstats = self.driver.proppatch(request, response, request.path)
         if propstats[200]:
             self.object.save()
         return response
 
     def mkcalendar(self, request, user, calendar):
-        response = caldav.MultistatusResponse()
+        response = MultistatusResponse()
         propstats = self.driver.proppatch(request, response, request.path)
 
         if propstats[200]:

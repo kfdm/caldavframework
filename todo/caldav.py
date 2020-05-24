@@ -136,7 +136,12 @@ class Calendar(BaseCollection):
             event = icalendar.Todo()
             event.add("uid", todo.id)
             event.add("summary", todo.summary)
+            event.add("status", todo.status)
             event.add("created", todo.created)
+            event.add("last-updated", todo.updated)
+
+            # if todo.status == 'COMPLETED':
+
             cal.add_component(event)
 
             ele.text = cal.to_ical().decode("utf8")

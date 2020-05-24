@@ -10,4 +10,4 @@ class CalendarAdmin(admin.ModelAdmin):
 
 @admin.register(models.Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("summary", "created", "status")
+    list_display = ("summary", "created", "updated", "status")

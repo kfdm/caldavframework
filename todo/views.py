@@ -1,5 +1,3 @@
-
-
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
@@ -145,12 +143,15 @@ class Task(CaldavView):
         calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
 
         for event in request.data.walk("vtodo"):
-            models.Event.objects.create(
+            models.Event.objects.update_or_create(
                 id=task,
                 calendar=calendar,
-                summary=event.decoded("summary").decode("utf8"),
-                created=event.decoded("created"),
-                status=event.decoded("status").decode("utf8"),
+                defaults={
+                    "summary": event.decoded("summary").decode("utf8"),
+                    "created": event.decoded("created"),
+                    "status": event.decoded("status").decode("utf8"),
+                    "updated": event.decoded("LAST-MODIFIED"),
+                },
             )
         return HttpResponse(status=201)
 

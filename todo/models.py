@@ -18,4 +18,5 @@ class Event(models.Model):
     calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
     summary = models.CharField(max_length=128)
     created = models.DateTimeField(default=timezone.now)
+    updated = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=128, blank=True)

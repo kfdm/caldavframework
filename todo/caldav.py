@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import icalendar
 
 from django.http.response import HttpResponse, HttpResponseBase
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils.crypto import get_random_string
 
 ET.register_namespace("DAV:", "")
@@ -22,8 +22,10 @@ class BaseCollection:
         query = request.data.find("{DAV:}prop")
         for href in request.data.findall("{DAV:}href"):
             propstats = response.propstat(href.text)
+            parts = resolve(href.text).kwargs
+
             for prop in query.getchildren():
-                status, value = self._report(request, prop.tag, prop.text, href.text)
+                status, value = self._report(request, prop.tag, prop.text, parts)
                 propstats[status].append(value)
             propstats.render(request)
 
@@ -103,7 +105,7 @@ class RootCollection(BaseCollection):
 
 
 class Calendar(BaseCollection):
-    def _report(self, request, prop, value, href):
+    def _report(self, request, prop, value, extra):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}getetag":
@@ -111,7 +113,7 @@ class Calendar(BaseCollection):
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            todo = self.obj.event_set.get(id=href.split(".")[0].split("/")[-1])
+            todo = self.obj.event_set.get(id=extra["task"])
 
             cal = icalendar.Calendar()
             event = icalendar.Todo()

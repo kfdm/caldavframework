@@ -15,7 +15,7 @@ class Calendar(models.Model):
     name = models.CharField(max_length=128)
     color = models.CharField(max_length=7)
     order = models.IntegerField(default=0)
-    etag = models.CharField(max_length=128)
+    etag = models.CharField(max_length=16)
 
     def to_ical(self):
         cal = icalendar.Calendar()
@@ -30,7 +30,7 @@ class Event(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
     raw = models.TextField()
-    etag = models.CharField(max_length=128)
+    etag = models.CharField(max_length=16)
 
     summary = models.CharField(max_length=128)
     created = models.DateTimeField(default=timezone.now)

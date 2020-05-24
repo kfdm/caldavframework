@@ -140,22 +140,27 @@ class Task(CaldavView):
     http_method_names = ["options", "put", "delete"]
     parser_classes = [parsers.Caldav]
 
-    def put(self, request, calendar, task, **kwargs):
-        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
+    def get_object(self, request, calendar, **kwargs):
+        return get_object_or_404(models.Calendar, owner=request.user, id=calendar)
 
+    def put(self, request, calendar, task, **kwargs):
         for event in request.data.walk("vtodo"):
-            models.Event.objects.update_or_create(
+            todo, created = models.Event.objects.update_or_create(
                 id=task,
-                calendar=calendar,
+                calendar=self.object,
                 defaults={
-                    "raw": event.to_ical().decode('utf8'),
+                    "raw": event.to_ical().decode("utf8"),
                     "summary": event.decoded("summary").decode("utf8"),
                     "created": event.decoded("created"),
                     "status": event.decoded("status").decode("utf8"),
                     "updated": event.decoded("LAST-MODIFIED"),
                 },
             )
-        return HttpResponse(status=201)
+
+            response = HttpResponse(status=201)
+            response["Etag"] = '"' + todo.etag + '"'
+            return response
+        return HttpResponse(status=500)
 
     def delete(self, request, task, **kwargs):
         models.Event.objects.get(pk=task).delete()

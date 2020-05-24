@@ -75,10 +75,6 @@ class RootCollection(BaseCollection):
             ET.SubElement(ele, "{DAV:}collection")
             return 200, ele
 
-        if prop == "{DAV:}getetag":
-            ele.text = get_random_string()
-            return 200, ele
-
         if prop == "{DAV:}current-user-privilege-set":
             ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
             ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}all")
@@ -122,13 +118,13 @@ class RootCollection(BaseCollection):
 class Calendar(BaseCollection):
     def _report(self, request, prop, value, extra):
         ele = ET.Element(prop)
+        todo = self.obj.event_set.get(id=extra["task"])
 
         if prop == "{DAV:}getetag":
-            ele.text = get_random_string()
+            ele.text = '"' + todo.etag +  '"'
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            todo = self.obj.event_set.get(id=extra["task"])
             ele.text = todo.to_ical()
             return 200, ele
 
@@ -138,7 +134,7 @@ class Calendar(BaseCollection):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}getetag":
-            ele.text = self.obj.etag
+            ele.text = '"' + self.obj.etag +  '"'
             return 200, ele
 
         if prop == "{DAV:}displayname":
@@ -216,7 +212,7 @@ class Task(BaseCollection):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}getetag":
-            ele.text = self.obj.etag
+            ele.text = '"' + self.obj.etag +  '"'
             return 200, ele
 
         if prop == "{DAV:}getcontenttype":

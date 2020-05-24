@@ -67,7 +67,7 @@ class CaldavView(APIView):
 
     def proppatch(self, request, user):
         response = caldav.MultistatusResponse()
-        propstats = self.driver.proppatch(request, response, request.path)
+        self.driver.proppatch(request, response, request.path)
         return response
 
 

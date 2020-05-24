@@ -6,7 +6,8 @@ import icalendar
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse, HttpResponseBase
-from django.urls import reverse, resolve
+from django.shortcuts import redirect, render, resolve_url
+from django.urls import resolve
 from django.utils.crypto import get_random_string
 
 ET.register_namespace("DAV:", "")
@@ -48,7 +49,17 @@ class BaseCollection:
 
     def _proppatch(self, request, prop, value):
         ele = ET.Element(prop)
-        logger.warning("Not implemented %s ", prop, self.obj)
+        logger.warning("Not implemented %s for %s", prop, self.obj)
+        return 404, ele
+
+    def _propfind(self, request, prop, value):
+        ele = ET.Element(prop)
+        logger.warning("Not implemented %s for %s", prop, self.obj)
+        return 404, ele
+
+    def _report(self, request, prop, value, extras):
+        ele = ET.Element(prop)
+        logger.warning("Not implemented %s for %s", prop, self.obj)
         return 404, ele
 
 
@@ -57,8 +68,8 @@ class RootCollection(BaseCollection):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}current-user-principal":
-            ET.SubElement(ele, "{DAV:}href").text = reverse(
-                "principal", kwargs={"user": request.user.username}
+            ET.SubElement(ele, "{DAV:}href").text = resolve_url(
+                "principal", user=request.user.username
             )
             return 200, ele
 
@@ -81,8 +92,8 @@ class RootCollection(BaseCollection):
             return 200, ele
 
         if prop == "{DAV:}owner":
-            ET.SubElement(ele, "{DAV:}href").text = reverse(
-                "principal", kwargs={"user": request.user.username}
+            ET.SubElement(ele, "{DAV:}href").text = resolve_url(
+                "principal", user=request.user.username
             )
             return 200, ele
 
@@ -90,14 +101,14 @@ class RootCollection(BaseCollection):
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-user-address-set":
-            ET.SubElement(ele, "{DAV:}href").text = reverse(
-                "principal", kwargs={"user": request.user.username}
+            ET.SubElement(ele, "{DAV:}href").text = resolve_url(
+                "principal", user=request.user.username,
             )
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-home-set":
-            ET.SubElement(ele, "{DAV:}href").text = reverse(
-                "principal", kwargs={"user": request.user.username}
+            ET.SubElement(ele, "{DAV:}href").text = resolve_url(
+                "principal", user=request.user.username
             )
             return 200, ele
 
@@ -155,8 +166,8 @@ class Calendar(BaseCollection):
             return 200, ele
 
         if prop == "{DAV:}owner":
-            ET.SubElement(ele, "{DAV:}href").text = reverse(
-                "principal", kwargs={"user": self.obj.owner.username}
+            ET.SubElement(ele, "{DAV:}href").text = resolve_url(
+                "principal", user=self.obj.owner.username
             )
             return 200, ele
 

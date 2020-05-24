@@ -118,6 +118,7 @@ class Calendar(CaldavView):
 
     def mkcalendar(self, request, user, calendar):
         response = MultistatusResponse()
+        self.object = models.Calendar(owner=request.user, id=calendar)
         propstats = self.driver.proppatch(request, response, request.path)
 
         if propstats[200]:
@@ -147,6 +148,7 @@ class Task(CaldavView):
                 id=task,
                 calendar=calendar,
                 defaults={
+                    "raw": event.to_ical().decode('utf8'),
                     "summary": event.decoded("summary").decode("utf8"),
                     "created": event.decoded("created"),
                     "status": event.decoded("status").decode("utf8"),

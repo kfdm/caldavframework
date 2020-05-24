@@ -2,8 +2,6 @@
 import logging
 import xml.etree.ElementTree as ET
 
-import icalendar
-
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import resolve_url
@@ -131,20 +129,7 @@ class Calendar(BaseCollection):
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
             todo = self.obj.event_set.get(id=extra["task"])
-
-            cal = icalendar.Calendar()
-            event = icalendar.Todo()
-            event.add("uid", todo.id)
-            event.add("summary", todo.summary)
-            event.add("status", todo.status)
-            event.add("created", todo.created)
-            event.add("last-updated", todo.updated)
-
-            # if todo.status == 'COMPLETED':
-
-            cal.add_component(event)
-
-            ele.text = cal.to_ical().decode("utf8")
+            ele.text = todo.to_ical()
             return 200, ele
 
         return 404, ele
@@ -153,7 +138,7 @@ class Calendar(BaseCollection):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}getetag":
-            ele.text = get_random_string()
+            ele.text = self.obj.etag
             return 200, ele
 
         if prop == "{DAV:}displayname":
@@ -186,7 +171,7 @@ class Calendar(BaseCollection):
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            ele.text = self.to_ical(request, self.obj)
+            ele.text = self.obj.to_ical()
             return 200, ele
 
         if prop == "{DAV:}getcontenttype":
@@ -231,7 +216,7 @@ class Task(BaseCollection):
         ele = ET.Element(prop)
 
         if prop == "{DAV:}getetag":
-            ele.text = get_random_string()
+            ele.text = self.obj.etag
             return 200, ele
 
         if prop == "{DAV:}getcontenttype":

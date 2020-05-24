@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 
 import icalendar
 
+from django.http.request import HttpRequest
 from django.http.response import HttpResponse, HttpResponseBase
 from django.urls import reverse, resolve
 from django.utils.crypto import get_random_string
@@ -18,7 +19,7 @@ class BaseCollection:
     def __init__(self, obj):
         self.obj = obj
 
-    def report(self, request, response, href):
+    def report(self, request: HttpRequest, response: HttpResponse, href: str):
         query = request.data.find("{DAV:}prop")
         for href in request.data.findall("{DAV:}href"):
             propstats = response.propstat(href.text)
@@ -29,7 +30,7 @@ class BaseCollection:
                 propstats[status].append(value)
             propstats.render(request)
 
-    def propfind(self, request, response, href):
+    def propfind(self, request: HttpRequest, response: HttpResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}prop").getchildren():
             status, value = self._propfind(request, prop.tag, prop.text)
@@ -37,13 +38,18 @@ class BaseCollection:
         propstats.render(request)
         return propstats
 
-    def proppatch(self, request, response, href):
+    def proppatch(self, request: HttpRequest, response: HttpResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}set").find("{DAV:}prop").getchildren():
             status, result = self._proppatch(request, prop.tag, prop.text)
             propstats[status].append(result)
         propstats.render(request)
         return propstats
+
+    def _proppatch(self, request, prop, value):
+        ele = ET.Element(prop)
+        logger.warning("Not implemented %s ", prop, self.obj)
+        return 404, ele
 
 
 class RootCollection(BaseCollection):

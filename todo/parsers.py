@@ -5,6 +5,8 @@ from rest_framework_xml.compat import etree
 
 from django.conf import settings
 
+import icalendar
+
 
 class XMLParser(parsers.XMLParser):
     media_type = "text/xml"
@@ -19,3 +21,10 @@ class XMLParser(parsers.XMLParser):
             return etree.parse(stream, parser=parser, forbid_dtd=True)
         except (etree.ParseError, ValueError) as exc:
             raise ParseError("XML parse error - %s" % str(exc))
+
+
+class Caldav(parsers.BaseParser):
+    media_type = "text/calendar"
+
+    def parse(self, stream, media_type=None, parser_context=None):
+        return icalendar.Calendar.from_ical(stream.read())

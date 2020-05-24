@@ -7,9 +7,11 @@ from rest_framework.views import APIView, Response
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
+from django.urls import resolve, reverse
+from django.utils.functional import cached_property
 from django.views.generic import RedirectView, TemplateView
 
-from todo import caldav, models
+from todo import caldav, models, parsers
 
 
 class WellKnownCaldav(APIView):
@@ -25,6 +27,22 @@ class WellKnownCaldav(APIView):
 
 # https://www.webdavsystem.com/server/creating_caldav_carddav/discovery/#nav_featuressupportdiscovery
 class CaldavView(APIView):
+    parser_classes = [parsers.XMLParser]
+
+    def get_object(self, request, **kwargs):
+        raise NotImplementedError()
+
+    def get_driver(self, request, **kwargs):
+        raise NotImplementedError()
+
+    @cached_property
+    def object(self):
+        return self.get_object(self.request, **self.kwargs)
+
+    @cached_property
+    def driver(self):
+        return self.get_driver(self.request, **self.kwargs)
+
     def options(self, request, *args, **kwargs):
         """Handle responding to requests for the OPTIONS HTTP verb."""
         response = HttpResponse()
@@ -35,8 +53,7 @@ class CaldavView(APIView):
 
     def propfind(self, request, **kwargs):
         response = caldav.MultistatusResponse()
-        driver = self.get_driver(request, **kwargs)
-        driver.propfind(request, response, request.path)
+        self.driver.propfind(request, response, request.path)
 
         if request.headers["Depth"] == "1" and hasattr(self, "depth"):
             self.depth(request, response, **kwargs)
@@ -45,14 +62,12 @@ class CaldavView(APIView):
 
     def report(self, request, **kwargs):
         response = caldav.MultistatusResponse()
-        driver = self.get_driver(request, **kwargs)
-        driver.report(request, response, request.path)
+        self.driver.report(request, response, request.path)
         return response
 
     def proppatch(self, request, user):
         response = caldav.MultistatusResponse()
-        driver = self.get_driver(request)
-        propstats = driver.proppatch(request, response, request.path)
+        propstats = self.driver.proppatch(request, response, request.path)
         return response
 
 
@@ -70,16 +85,23 @@ class RootCollection(CaldavView):
 
 
 class Calendar(CaldavView):
-    http_method_names = ["options", "mkcalendar", "proppatch", "delete", "propfind", "report"]
+    http_method_names = [
+        "options",
+        "mkcalendar",
+        "proppatch",
+        "delete",
+        "propfind",
+        "report",
+    ]
 
     def get_driver(self, request, calendar, **kwargs):
-        self.calendar = get_object_or_404(
-            models.Calendar, owner=request.user, id=calendar
-        )
-        return caldav.Calendar(self.calendar)
+        return caldav.Calendar(self.object)
+
+    def get_object(self, request, calendar, **kwargs):
+        return get_object_or_404(models.Calendar, owner=request.user, id=calendar)
 
     def depth(self, request, response, **kwargs):
-        for event in self.calendar.event_set.all():
+        for event in self.object.event_set.all():
             driver = caldav.Task(event)
             href = resolve_url(
                 "task",
@@ -90,27 +112,22 @@ class Calendar(CaldavView):
             driver.propfind(request, response, href)
 
     def delete(self, request, user, calendar):
-        calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
-        calendar.delete()
+        self.object.delete()
         return HttpResponse(status=204)
 
     def proppatch(self, request, **kwargs):
         response = caldav.MultistatusResponse()
-        driver = self.get_driver(request, **kwargs)
-        propstats = driver.proppatch(request, response, request.path)
+        propstats = self.driver.proppatch(request, response, request.path)
         if propstats[200]:
-            self.calendar.save()
+            self.object.save()
         return response
 
     def mkcalendar(self, request, user, calendar):
-        calendar = models.Calendar(owner=request.user, id=calendar)
-        driver = caldav.Calendar(calendar)
-
         response = caldav.MultistatusResponse()
-        propstats = driver.proppatch(request, response, request.path)
+        propstats = self.driver.proppatch(request, response, request.path)
 
         if propstats[200]:
-            calendar.save()
+            self.object.save()
             return HttpResponse(status=201)
 
         return HttpResponse(status=400)
@@ -126,18 +143,21 @@ class UserPrincipalDiscovery(CaldavView):
 
 class Task(CaldavView):
     http_method_names = ["options", "put", "delete"]
+    parser_classes = [parsers.Caldav]
 
     def put(self, request, calendar, task, **kwargs):
         calendar = get_object_or_404(models.Calendar, owner=request.user, id=calendar)
-        data = request.body.decode("utf8")
-        for event in icalendar.Calendar.from_ical(data).walk("vtodo"):
-            todo = models.Event()
-            todo.calendar = calendar
-            todo.summary = event.decoded("summary").decode("utf8")
-            todo.created = event.decoded("created")
-            todo.status = event.decoded("status").decode("utf8")
-            todo.save()
+
+        for event in request.data.walk("vtodo"):
+            models.Event.objects.create(
+                id=task,
+                calendar=calendar,
+                summary=event.decoded("summary").decode("utf8"),
+                created=event.decoded("created"),
+                status=event.decoded("status").decode("utf8"),
+            )
         return HttpResponse(status=201)
 
     def delete(self, request, task, **kwargs):
-        return HttpResponse(status=405)
+        models.Event.objects.get(pk=task).delete()
+        return HttpResponse(status=204)

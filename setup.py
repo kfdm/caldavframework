@@ -22,6 +22,7 @@ setup(
         "Topic :: Internet :: WWW/HTTP",
     ],
     install_requires=[
+        "defusedxml",
         "Django>=3.0",
         "djangorestframework",
         "icalendar",

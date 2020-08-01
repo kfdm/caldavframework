@@ -1,4 +1,6 @@
+.env
 .venv
 *.egg-info
 *.sqlite3
-.env
+build
+dist

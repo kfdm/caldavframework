@@ -1,8 +1,9 @@
 APP_BIN := .venv/bin/todo-server
+PYTHON_BIN := .venv/bin/python
 PIP_BIN := .venv/bin/pip
 DOCKER := kfdm/todo-server
 
-.PHONY:	test build migrate run shell clean pip reset
+.PHONY:	test build migrate run shell clean pip reset dist
 .DEFAULT: test
 
 test: ${APP_BIN}
@@ -19,6 +20,8 @@ pip: ${APP_BIN}
 
 build:
 	docker build . --tag ${DOCKER}:local
+dist:
+	${PYTHON_BIN} bdist_wheel
 reset: ${APP_BIN}
 	${APP_BIN} migrate todo zero
 migrate: ${APP_BIN}

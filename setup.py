@@ -1,8 +1,17 @@
+import pathlib
+
 from setuptools import find_packages, setup
+
+# Read version information
+# Taken from https://github.com/kennethreitz/pipenv/blob/master/setup.py
+about = {}
+here = pathlib.Path(__file__).parent / "todo" / "version.py"
+with here.open() as fp:
+    exec(fp.read(), about)
 
 setup(
     name="CalDavFramework",
-    version="0.0.1",
+    version=about["__version__"],
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
     license="MIT License",

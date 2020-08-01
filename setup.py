@@ -1,13 +1,13 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="todo-django",
+    name="CalDavFramework",
     version="0.0.1",
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
     license="MIT License",
-    description="A simple stats package",
-    url="https://github.com/todo/todo-django",
+    description="A Django framework for building caldav servers",
+    url="https://github.com/kfdm/caldavframework",
     author="Paul Traylor",
     classifiers=[
         "Environment :: Web Environment",
@@ -44,7 +44,5 @@ setup(
             "unittest-xml-reporting",
         ],
     },
-    entry_points={
-        "console_scripts": ["todo-server = todo.standalone.manage:main"],
-    },
+    entry_points={"console_scripts": ["todo-server = todo.standalone.manage:main"],},
 )

@@ -15,6 +15,8 @@ import pathlib
 
 import environ
 
+from django.utils.log import DEFAULT_LOGGING as LOGGING
+
 from todo.version import __version__
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -143,3 +145,14 @@ if "SENTRY_DSN" in os.environ:
 
     os.environ.setdefault("SENTRY_RELEASE", __version__)
     sentry_sdk.init(integrations=[DjangoIntegration()])
+
+
+# Extend Django logging with our custom ones
+LOGGING["loggers"]["todo.caldav"] = {
+    "handlers": ["console"],
+    "level": "DEBUG" if DEBUG else "INFO",
+    "propagate": True,
+    "filters": ["require_debug_true"],
+}
+LOGGING["handlers"]["console"]["level"] = "DEBUG" if DEBUG else "INFO"
+

@@ -29,5 +29,5 @@ RUN SECRET_KEY=1 todo-server collectstatic --noinput
 USER nobody
 EXPOSE 8000
 
-ENTRYPOINT [ "/sbin/tiny", "--" ]
+ENTRYPOINT [ "/sbin/tini", "--" ]
 CMD ["gunicorn", "todo.standalone.wsgi:application", "-b", "0.0.0.0:8000"]

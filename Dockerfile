@@ -7,8 +7,10 @@ ENV PYTHONUNBUFFERED 1
 ENV APP_DIR /usr/src/app
 ENV STATIC_ROOT /var/cache/app
 
-# Upgrade Pip
-RUN pip install --no-cache-dir -U pip
+# Container Basics
+RUN set -ex \
+    && apk add --no-cache tini \
+    && pip install --no-cache-dir pip==20.2
 
 # Install Postgres Support
 RUN set -ex \
@@ -27,5 +29,5 @@ RUN SECRET_KEY=1 todo-server collectstatic --noinput
 USER nobody
 EXPOSE 8000
 
-ENTRYPOINT ["docker/docker-entrypoint.sh"]
-CMD ["web"]
+ENTRYPOINT [ "/sbin/tiny", "--" ]
+CMD ["gunicorn", "todo.standalone.wsgi:application", "-b", "0.0.0.0:8000"]

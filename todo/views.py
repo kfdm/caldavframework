@@ -2,9 +2,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404, redirect, resolve_url
-from django.utils.functional import cached_property
 
-from todo import caldav, models, parsers
+from todo import base, caldav, models, parsers
 from todo.response import HttpResponse, MultistatusResponse
 
 
@@ -19,53 +18,7 @@ class WellKnownCaldav(APIView):
         return redirect("discovery")
 
 
-# https://www.webdavsystem.com/server/creating_caldav_carddav/discovery/#nav_featuressupportdiscovery
-class CaldavView(APIView):
-    parser_classes = [parsers.XMLParser]
-
-    def get_object(self, request, **kwargs):
-        raise NotImplementedError()
-
-    def get_driver(self, request, **kwargs):
-        raise NotImplementedError()
-
-    @cached_property
-    def object(self):
-        return self.get_object(self.request, **self.kwargs)
-
-    @cached_property
-    def driver(self):
-        return self.get_driver(self.request, **self.kwargs)
-
-    def options(self, request, *args, **kwargs):
-        """Handle responding to requests for the OPTIONS HTTP verb."""
-        response = HttpResponse()
-        response["Allow"] = ", ".join(self._allowed_methods())
-        response["Content-Length"] = "0"
-        response["DAV"] = "1, 3, calendar-access, addressbook, extended-mkcol"
-        return response
-
-    def propfind(self, request, **kwargs):
-        response = MultistatusResponse()
-        self.driver.propfind(request, response, request.path)
-
-        if request.headers["Depth"] == "1" and hasattr(self, "depth"):
-            self.depth(request, response, **kwargs)
-
-        return response
-
-    def report(self, request, **kwargs):
-        response = MultistatusResponse()
-        self.driver.report(request, response, request.path)
-        return response
-
-    def proppatch(self, request, user):
-        response = MultistatusResponse()
-        self.driver.proppatch(request, response, request.path)
-        return response
-
-
-class RootCollection(CaldavView):
+class RootCollection(base.CaldavView):
     http_method_names = ["options", "propfind", "proppatch", "report", "mkcalendar"]
 
     def get_driver(self, request, **kwargs):
@@ -78,7 +31,7 @@ class RootCollection(CaldavView):
             driver.propfind(request, response, href)
 
 
-class Calendar(CaldavView):
+class Calendar(base.CaldavView):
     http_method_names = [
         "options",
         "mkcalendar",
@@ -129,14 +82,14 @@ class Calendar(CaldavView):
 
 
 # https://www.webdavsystem.com/server/creating_caldav_carddav/discovery/#nav_currentuserprincipaldiscovery
-class UserPrincipalDiscovery(CaldavView):
+class UserPrincipalDiscovery(base.CaldavView):
     http_method_names = ["options", "propfind"]
 
     def get_driver(self, request, **kwargs):
         return caldav.RootCollection(request.user)
 
 
-class Task(CaldavView):
+class Task(base.CaldavView):
     http_method_names = ["options", "put", "delete"]
     parser_classes = [parsers.Caldav]
 

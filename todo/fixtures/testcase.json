@@ -1,0 +1,10 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$260000$aGafLhaD9lHrPyNKEOQ4uo$/DoZHx/lP4Q7q1NcOEIWhqm53byAQumHDK3v+lTsvhE=",
+      "username": "Aladdin"
+    }
+  }
+]

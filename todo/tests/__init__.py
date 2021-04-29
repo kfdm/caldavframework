@@ -18,12 +18,28 @@ class BaseCaldavTestCase(test.TestCase):
 
 
 class DAVClient(APIClient):
-    def propfind(self, path, **extra):
+    def generic(
+        self,
+        method,
+        path,
+        data="",
+        content_type="application/octet-stream",
+        secure=False,
+        **extra
+    ):
         if "xml" in extra:
-            extra["data"] = extra.pop("xml")
-            extra["content_type"] = "text/xml"
+            data = extra.pop("xml")
+            content_type = "text/xml"
         if "xml_file" in extra:
             with extra.pop("xml_file").open() as fp:
-                extra["data"] = fp.read()
-                extra["content_type"] = "text/xml"
+                data = fp.read()
+                content_type = "text/xml"
+        if "ics_file" in extra:
+            with extra.pop("ics_file").open() as fp:
+                data = fp.read()
+                content_type = "text/calendar; charset=utf-8"
+
+        return super().generic(method, path, data, content_type, secure, **extra)
+
+    def propfind(self, path, **extra):
         return self.generic("PROPFIND", path, **extra)

@@ -1,8 +1,9 @@
 import logging
 import xml.etree.ElementTree as ET
 
+from .response import MultistatusResponse
+
 from django.http.request import HttpRequest
-from django.http.response import HttpResponse
 from django.shortcuts import resolve_url
 from django.urls import resolve
 
@@ -16,7 +17,7 @@ class BaseCollection:
     def __init__(self, obj):
         self.obj = obj
 
-    def report(self, request: HttpRequest, response: HttpResponse, href: str):
+    def report(self, request: HttpRequest, response: MultistatusResponse, href: str):
         query = request.data.find("{DAV:}prop")
         for href in request.data.findall("{DAV:}href"):
             propstats = response.propstat(href.text)
@@ -27,7 +28,7 @@ class BaseCollection:
                 propstats[status].append(value)
             propstats.render(request)
 
-    def propfind(self, request: HttpRequest, response: HttpResponse, href: str):
+    def propfind(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}prop").getchildren():
             status, value = self._propfind(request, prop.tag, prop.text)
@@ -35,7 +36,7 @@ class BaseCollection:
         propstats.render(request)
         return propstats
 
-    def proppatch(self, request: HttpRequest, response: HttpResponse, href: str):
+    def proppatch(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}set").find("{DAV:}prop").getchildren():
             status, result = self._proppatch(request, prop.tag, prop.text)

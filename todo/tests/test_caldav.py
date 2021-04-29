@@ -1,9 +1,9 @@
-from . import DAVClient, TestCase
+from . import BaseCaldavTestCase, DAVClient
 
 from django.urls import reverse
 
 
-class CaldavTest(TestCase):
+class CaldavTest(BaseCaldavTestCase):
     client_class = DAVClient
     fixtures = ["testcase"]
 

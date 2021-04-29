@@ -43,3 +43,6 @@ class DAVClient(APIClient):
 
     def propfind(self, path, **extra):
         return self.generic("PROPFIND", path, **extra)
+    
+    def report(self, path, **extra):
+        return self.generic("REPORT", path, **extra)

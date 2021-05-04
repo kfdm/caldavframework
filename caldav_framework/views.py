@@ -17,7 +17,7 @@ class RootCollection(base.CaldavView):
 
     def depth(self, request, response, **kwargs):
         for c in models.Calendar.objects.filter(owner=request.user):
-            instance = driver.Calendar(c)
+            driver = driver.Calendar(c)
             href = resolve_url("calendar", user=request.user.username, calendar=c.id)
             instance.propfind(request, response, href)
 
@@ -40,7 +40,7 @@ class Calendar(base.CaldavView):
 
     def depth(self, request, response, **kwargs):
         for event in self.object.event_set.all():
-            instance = driver.Task(event)
+            driver = driver.Task(event)
             href = resolve_url(
                 "task",
                 user=request.user.username,

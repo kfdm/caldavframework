@@ -1,9 +1,10 @@
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
+from . import base, driver, models, parsers
+
 from django.shortcuts import get_object_or_404, redirect, resolve_url
 
-from . import base, caldav, models, parsers
 from caldav_framework.response import HttpResponse, MultistatusResponse
 
 
@@ -22,13 +23,13 @@ class RootCollection(base.CaldavView):
     http_method_names = ["options", "propfind", "proppatch", "report", "mkcalendar"]
 
     def get_driver(self, request, **kwargs):
-        return caldav.RootCollection(request.user)
+        return driver.RootCollection(request.user)
 
     def depth(self, request, response, **kwargs):
         for c in models.Calendar.objects.filter(owner=request.user):
-            driver = caldav.Calendar(c)
+            instance = driver.Calendar(c)
             href = resolve_url("calendar", user=request.user.username, calendar=c.id)
-            driver.propfind(request, response, href)
+            instance.propfind(request, response, href)
 
 
 class Calendar(base.CaldavView):
@@ -42,21 +43,21 @@ class Calendar(base.CaldavView):
     ]
 
     def get_driver(self, request, calendar, **kwargs):
-        return caldav.Calendar(self.object)
+        return driver.Calendar(self.object)
 
     def get_object(self, request, calendar, **kwargs):
         return get_object_or_404(models.Calendar, owner=request.user, id=calendar)
 
     def depth(self, request, response, **kwargs):
         for event in self.object.event_set.all():
-            driver = caldav.Task(event)
+            instance = driver.Task(event)
             href = resolve_url(
                 "task",
                 user=request.user.username,
                 calendar=event.calendar_id,
                 task=event.id,
             )
-            driver.propfind(request, response, href)
+            instance.propfind(request, response, href)
 
     def delete(self, request, user, calendar):
         self.object.delete()
@@ -86,7 +87,7 @@ class UserPrincipalDiscovery(base.CaldavView):
     http_method_names = ["options", "propfind"]
 
     def get_driver(self, request, **kwargs):
-        return caldav.RootCollection(request.user)
+        return driver.RootCollection(request.user)
 
 
 class Task(base.CaldavView):

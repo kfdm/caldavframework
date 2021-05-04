@@ -43,6 +43,6 @@ class Event(models.Model):
 
     def to_ical(self):
         cal = icalendar.Calendar()
-        event = icalendar.Todo.from_ical(self.raw)
+        event = icalendar.caldav_framework.from_ical(self.raw)
         cal.add_component(event)
         return cal.to_ical().decode("utf8")

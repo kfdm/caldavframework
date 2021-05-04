@@ -30,4 +30,4 @@ USER nobody
 EXPOSE 8000
 
 ENTRYPOINT [ "/sbin/tini", "--" ]
-CMD ["gunicorn", "todo.standalone.wsgi:application", "-b", "0.0.0.0:8000"]
+CMD ["gunicorn", "caldav_framework.standalone.wsgi:application", "-b", "0.0.0.0:8000"]

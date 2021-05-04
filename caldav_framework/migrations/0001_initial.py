@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
                 ('updated', models.DateTimeField(default=django.utils.timezone.now)),
                 ('status', models.CharField(blank=True, choices=[('NEEDS-ACTION', 'NEEDS-ACTION'), ('COMPLETED', 'COMPLETED')], max_length=128)),
-                ('calendar', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='todo.Calendar')),
+                ('calendar', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='caldav_framework.Calendar')),
             ],
         ),
     ]

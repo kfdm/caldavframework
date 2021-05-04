@@ -121,11 +121,11 @@ class Calendar(BaseCollection):
         todo = self.obj.event_set.get(id=extra["task"])
 
         if prop == "{DAV:}getetag":
-            ele.text = '"' + todo.etag + '"'
+            ele.text = '"' + caldav_framework.etag + '"'
             return 200, ele
 
         if prop == "{urn:ietf:params:xml:ns:caldav}calendar-data":
-            ele.text = todo.to_ical()
+            ele.text = caldav_framework.to_ical()
             return 200, ele
 
         return 404, ele

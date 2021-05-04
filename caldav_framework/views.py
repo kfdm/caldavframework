@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404, redirect, resolve_url
 
-from todo import base, caldav, models, parsers
-from todo.response import HttpResponse, MultistatusResponse
+from . import base, caldav, models, parsers
+from caldav_framework.response import HttpResponse, MultistatusResponse
 
 
 class WellKnownCaldav(APIView):
@@ -111,7 +111,7 @@ class Task(base.CaldavView):
             )
 
             response = HttpResponse(status=201)
-            response["Etag"] = '"' + todo.etag + '"'
+            response["Etag"] = '"' + caldav_framework.etag + '"'
             return response
         return HttpResponse(status=500)
 

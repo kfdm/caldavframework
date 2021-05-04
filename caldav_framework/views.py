@@ -102,7 +102,7 @@ class Task(base.CaldavView):
             )
 
             response = HttpResponse(status=201)
-            response["Etag"] = '"' + caldav_framework.etag + '"'
+            response["Etag"] = '"' + todo.etag + '"'
             return response
         return HttpResponse(status=500)
 

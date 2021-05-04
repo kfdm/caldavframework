@@ -3,14 +3,17 @@ from rest_framework.views import APIView
 
 from . import parsers, response
 
+from django.shortcuts import redirect
 from django.utils.functional import cached_property
-from django.views.generic import RedirectView
 
 
-class WellKnownCaldav(APIView, RedirectView):
+class WellKnownCaldav(APIView):
     http_method_names = ["get", "head", "options", "propfind"]
     permission_classes = [AllowAny]
     pattern_name = None
+
+    def get(self, request, *args, **kwargs):
+        return redirect(self.pattern_name)
 
     def propfind(self, request, *args, **kwargs):
         return self.get(request, *args, **kwargs)

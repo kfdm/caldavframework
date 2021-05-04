@@ -33,7 +33,7 @@ class Dispatcher:
         try:
             func = self.handlers[method][prop.tag]
         except KeyError:
-            logger.debug("Not implemented %s for %s", prop.tag, self.obj)
+            logger.debug("Unknown %s for %s %s", prop.tag, method, self.obj)
             return 404, ele
         else:
             return func(ele=ele, prop=prop, **kwargs)

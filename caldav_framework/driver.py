@@ -29,6 +29,11 @@ class RootCollection(BaseCollection):
         )
         return 200, ele
 
+    @propfind("{DAV:}resourcetype")
+    def resource_type(self, ele, **kwargs):
+        ET.SubElement(ele, "{DAV:}collection")
+        return 200, ele
+
     @propfind("{DAV:}current-user-privilege-set")
     def current_user_privilege_set(self, ele, **kwargs):
         ET.SubElement(ET.SubElement(ele, "{DAV:}privilege"), "{DAV:}read")
@@ -62,12 +67,6 @@ class RootCollection(BaseCollection):
         ET.SubElement(ele, "{DAV:}href").text = resolve_url(
             "principal", user=request.user.username
         )
-        return 200, ele
-
-    @propfind("{DAV:}resourcetype")
-    def resource_type(self, ele, **kwargs):
-        ET.SubElement(ele, "{DAV:}principal")
-        ET.SubElement(ele, "{DAV:}collection")
         return 200, ele
 
 

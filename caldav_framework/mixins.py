@@ -31,6 +31,6 @@ class ProppatchMixin:
     def proppatch(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}set").find("{DAV:}prop").getchildren():
-            propstats << self.dispatch("propstat", request=request, prop=prop)
+            propstats << self.dispatch("proppatch", request=request, prop=prop)
         propstats.render(request)
         return propstats

@@ -1,22 +1,12 @@
-from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
-
 from . import base, driver, models, parsers
 
-from django.shortcuts import get_object_or_404, redirect, resolve_url
+from django.shortcuts import get_object_or_404, resolve_url
 
 from caldav_framework.response import HttpResponse, MultistatusResponse
 
 
-class WellKnownCaldav(APIView):
-    http_method_names = ["get", "head", "options", "propfind"]
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        return redirect("discovery")
-
-    def propfind(self, request):
-        return redirect("discovery")
+class WellKnownCaldav(base.WellKnownCaldav):
+    pattern_name = "discovery"
 
 
 class RootCollection(base.CaldavView):

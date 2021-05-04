@@ -41,7 +41,7 @@ class MultistatusResponse(HttpResponse):
         super().__init__(*args, **kwargs)
         self.__element = ET.Element("{DAV:}multistatus")
         self._is_rendered = False
-        self["DAV"] = "1, 2, 3, calendar-access, addressbook, extended-mkcol"
+        self["DAV"] = "1, 3, access-control, calendar-access"
 
     def sub_response(self, href):
         response = ET.SubElement(self.__element, "{DAV:}response")

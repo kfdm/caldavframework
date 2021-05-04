@@ -42,7 +42,7 @@ class CaldavView(APIView):
         r = response.HttpResponse()
         r["Allow"] = ", ".join(self._allowed_methods())
         r["Content-Length"] = "0"
-        r["DAV"] = "1, 3, calendar-access, addressbook, extended-mkcol"
+        r["DAV"] = "1, 3, access-control, calendar-access"
         return r
 
     def propfind(self, request, **kwargs):

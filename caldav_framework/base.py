@@ -1,8 +1,19 @@
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from . import parsers, response
 
 from django.utils.functional import cached_property
+from django.views.generic import RedirectView
+
+
+class WellKnownCaldav(APIView, RedirectView):
+    http_method_names = ["get", "head", "options", "propfind"]
+    permission_classes = [AllowAny]
+    pattern_name = None
+
+    def propfind(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
 
 
 # https://www.webdavsystem.com/server/creating_caldav_carddav/discovery/#nav_featuressupportdiscovery

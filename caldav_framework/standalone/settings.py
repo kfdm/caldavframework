@@ -17,7 +17,7 @@ import environ
 
 from django.utils.log import DEFAULT_LOGGING as LOGGING
 
-from todo.version import __version__
+from caldav_framework.version import __version__
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = pathlib.Path(__file__).parent.parent.parent
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "todo",
+    "caldav_framework",
 ]
 
 MIDDLEWARE = [
@@ -63,7 +63,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "todo.standalone.urls"
+ROOT_URLCONF = "caldav_framework.standalone.urls"
 
 TEMPLATES = [
     {
@@ -81,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "todo.standalone.wsgi.application"
+WSGI_APPLICATION = "caldav_framework.standalone.wsgi.application"
 
 
 # Database
@@ -133,9 +133,9 @@ else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["todo.authentication.BasicAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["caldav_framework.authentication.BasicAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_PARSER_CLASSES": ["todo.parsers.XMLParser",],
+    "DEFAULT_PARSER_CLASSES": ["caldav_framework.parsers.XMLParser",],
 }
 
 
@@ -148,7 +148,7 @@ if "SENTRY_DSN" in os.environ:
 
 
 # Extend Django logging with our custom ones
-LOGGING["loggers"]["todo.caldav"] = {
+LOGGING["loggers"]["caldav_framework.caldav"] = {
     "handlers": ["console"],
     "level": "DEBUG" if DEBUG else "INFO",
     "propagate": True,

@@ -17,6 +17,8 @@ ${APP_BIN}: $(PIP_BIN)
 	${PIP_BIN} install -r docker/requirements.txt
 	${PIP_BIN} install -e .[dev,standalone]
 pip: ${APP_BIN}
+	${PIP_BIN} install -r docker/requirements.txt
+	${PIP_BIN} install -e .[dev,standalone]
 
 build:
 	docker build . --tag ${DOCKER}:local

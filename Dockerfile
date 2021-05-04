@@ -21,9 +21,10 @@ RUN set -ex \
 
 # Finish installing app
 WORKDIR ${APP_DIR}
-ADD todo ${APP_DIR}/todo
+ADD caldav_framework ${APP_DIR}/caldav_framework
 ADD docker ${APP_DIR}/docker
 ADD setup.py ${APP_DIR}/setup.py
+ADD setup.cfg ${APP_DIR}/setup.cfg
 RUN set -ex && pip install --no-cache-dir -r ${APP_DIR}/docker/requirements.txt
 RUN SECRET_KEY=1 todo-server collectstatic --noinput
 USER nobody

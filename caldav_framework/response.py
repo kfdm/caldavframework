@@ -20,7 +20,7 @@ class Propstats:
         return self.collection[key]
 
     def __lshift__(self, other):
-        self.collection[other[0]] = other[1]
+        self.collection[other[0]].append(other[1])
 
     def render(self, request):
         for status_code in self.collection:

@@ -40,7 +40,7 @@ class Calendar(base.CaldavView):
 
     def depth(self, request, response, **kwargs):
         for event in self.object.event_set.all():
-            driver = driver.Task(event)
+            instance = driver.Task(event)
             href = resolve_url(
                 "task",
                 user=request.user.username,
@@ -102,7 +102,7 @@ class Task(base.CaldavView):
             )
 
             response = HttpResponse(status=201)
-            response["Etag"] = '"' + caldav_framework.etag + '"'
+            response["Etag"] = '"' + todo.etag + '"'
             return response
         return HttpResponse(status=500)
 

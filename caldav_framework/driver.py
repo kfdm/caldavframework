@@ -1,8 +1,6 @@
-from collections import defaultdict
 import logging
 import xml.etree.ElementTree as ET
-
-from django.utils.functional import cached_property
+from collections import defaultdict
 
 from .response import MultistatusResponse
 
@@ -18,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 def dispatch(method, prop):
     def inner(func):
-        func.method = method
-        func.prop = prop
+        setattr(func, "method", method)
+        setattr(func, "prop", prop)
         return func
 
     return inner
@@ -29,53 +27,48 @@ class BaseCollection:
     def __init__(self, obj):
         self.obj = obj
 
-    @cached_property
-    def handlers(self):
-        funcs = defaultdict(dict)
+        self.handlers = defaultdict(dict)
         for obj in dir(self):
             try:
-                method = getattr(self, "method", None)
-                prop = getattr(self, "prop", None)
-                funcs[method][prop] = obj
-            except KeyError:
+                func = getattr(self, obj)
+                method = getattr(func, "method")
+                prop = getattr(func, "prop")
+                self.handlers[method][prop] = func
+            except AttributeError:
                 pass
-        return funcs
 
     def dispatch(self, method, prop, **kwargs):
-        ele = ET.Element(prop.text)
+        ele = ET.Element(prop.tag)
         try:
             func = self.handlers[method][prop.tag]
         except KeyError:
             return 404, ele
         else:
-            return func(self, ele=ele, prop=prop, **kwargs)
+            return func(ele=ele, prop=prop, **kwargs)
 
-    def report(self, request: HttpRequest, response: MultistatusResponse, href: str):
+    def report(self, request: HttpRequest, response: MultistatusResponse):
         query = request.data.find("{DAV:}prop")
         for href in request.data.findall("{DAV:}href"):
             propstats = response.propstat(href.text)
             parts = resolve(href.text).kwargs
 
             for prop in query.getchildren():
-                status, result = self.dispatch(
+                propstats << self.dispatch(
                     "report", request=request, prop=prop, parts=parts
                 )
-                propstats[status].append(result)
             propstats.render(request)
 
     def propfind(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}prop").getchildren():
-            status, result = self.dispatch("propfind", request=request, prop=prop)
-            propstats[status].append(result)
+            propstats << self.dispatch("propfind", request=request, prop=prop)
         propstats.render(request)
         return propstats
 
     def proppatch(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
         for prop in request.data.find("{DAV:}set").find("{DAV:}prop").getchildren():
-            status, result = self.dispatch("propfind", request=request, prop=prop)
-            propstats[status].append(result)
+            propstats << self.dispatch("proppatch", request=request, prop=prop)
         propstats.render(request)
         return propstats
 

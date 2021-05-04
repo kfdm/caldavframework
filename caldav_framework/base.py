@@ -53,7 +53,7 @@ class CaldavView(APIView):
 
     def report(self, request, **kwargs):
         r = response.MultistatusResponse()
-        self.driver.report(request, r, request.path)
+        self.driver.report(request, r)
         return r
 
     def proppatch(self, request, **kwargs):

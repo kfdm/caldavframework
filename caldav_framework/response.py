@@ -19,6 +19,9 @@ class Propstats:
     def __getitem__(self, key):
         return self.collection[key]
 
+    def __lshift__(self, other):
+        self.collection[other[0]] = other[1]
+
     def render(self, request):
         for status_code in self.collection:
             propstat = ET.SubElement(self.parent, "{DAV:}propstat")

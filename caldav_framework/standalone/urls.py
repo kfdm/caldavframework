@@ -18,5 +18,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("caldav_framework.urls")),
+    path("", include("caldav_framework.example.urls")),
 ]

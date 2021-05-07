@@ -27,10 +27,9 @@ dist:
 reset: ${APP_BIN}
 	${APP_BIN} migrate todo zero
 migrate: ${APP_BIN}
-	${APP_BIN} makemigrations todo
 	${APP_BIN} migrate
 run: migrate
-	${APP_BIN} runserver
+	${APP_BIN} runserver 5232
 shell: migrate
 	${APP_BIN} shell
 

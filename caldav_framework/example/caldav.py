@@ -1,7 +1,8 @@
-from . import base, driver, models, parsers
+from . import models
 
 from django.shortcuts import get_object_or_404, resolve_url
 
+from caldav_framework import base, driver, parsers
 from caldav_framework.response import HttpResponse, MultistatusResponse
 
 

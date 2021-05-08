@@ -16,7 +16,7 @@
     </tr>
     {% for calendar in calendar_list %}
     <tr>
-        <td><a href="{% url 'calendar-detail' calendar.pk %}">{{calendar.name}}</a></td>
+        <td><a href="{{calendar.get_absolute_url}}">{{calendar.name}}</a></td>
         <td style="color: {{calendar.color}}">{{calendar.color}}</td>
     </tr>
     {% endfor %}

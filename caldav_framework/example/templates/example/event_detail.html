@@ -6,11 +6,32 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
-        <li class="breadcrumb-item active"><a href="{% url 'calendar-detail' object.calendar.pk %}">{{object.calendar.name}}</a></li>
-        <li class="breadcrumb-item active"><a href="{% url 'todo-detail' pk=object.pk calendar=object.calendar.pk %}">{{object.summary}}</a></li>
+        <li class="breadcrumb-item active"><a href="{{object.calendar.get_absolute_url}}">{{object.calendar.name}}</a></li>
+        <li class="breadcrumb-item active"><a href="{{object.get_absolute_url}}">{{object.summary}}</a></li>
     </ol>
 </nav>
 
+<table class="table">
+    <tr>
+        <th>Summary</th>
+        <td>{{object.summary}}</td>
+    </tr>
+    <tr>
+        <th>Created</th>
+        <td>{{object.created}}</td>
+    </tr>
+    <tr>
+        <th>Updated</th>
+        <td>{{object.updated}}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>{{object.status}}</td>
+    </tr>
+</table>
 
+<details>
+    <pre>{{object.raw}}</pre>
+</details>
 
 {% endblock %}

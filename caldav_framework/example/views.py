@@ -1,7 +1,7 @@
 from . import models
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect, resolve_url
+from django.shortcuts import redirect
 from django.views.generic import CreateView, DetailView, TemplateView
 
 
@@ -21,7 +21,7 @@ class CalendarList(CreateView, LoginRequiredMixin):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return resolve_url("calendar-detail", pk=self.object.pk)
+        return self.object.get_absolute_url()
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -42,7 +42,7 @@ class CalendarDetail(DetailView, LoginRequiredMixin):
                 calendar=calendar,
                 summary=request.POST["summary"],
             )
-            return redirect("todo-detail", pk=todo.pk, calendar=calendar.pk)
+            return redirect(todo)
         return self.get(request, **kwargs)
 
 

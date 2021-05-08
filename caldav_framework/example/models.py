@@ -5,6 +5,7 @@ import icalendar
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.urls import reverse
 
 
 class Calendar(models.Model):
@@ -24,6 +25,9 @@ class Calendar(models.Model):
             event = icalendar.Event.from_ical(e.raw)
             calendar.add_component(event)
         return calendar.to_ical().decode("utf8")
+
+    def get_absolute_url(self):
+        return reverse("calendar-detail", args=(self.pk,))
 
 
 class Event(models.Model):
@@ -46,3 +50,6 @@ class Event(models.Model):
         calendar["version"] = "2.0"
         calendar["PRODID"] = "todo-server"
         return calendar.to_ical().decode("utf8")
+
+    def get_absolute_url(self):
+        return reverse("todo-detail", args=(self.calendar.pk, self.pk))

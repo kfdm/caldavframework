@@ -6,7 +6,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
-        <li class="breadcrumb-item active"><a href="{% url 'calendar-detail' calendar.pk %}">{{calendar.name}}</a></li>
+        <li class="breadcrumb-item active"><a href="{{calendar.get_absolute_url}}">{{calendar.name}}</a></li>
     </ol>
 </nav>
 
@@ -25,7 +25,7 @@
     </tr>
     {% for todo in calendar.event_set.all %}
     <tr>
-        <td><a href="{% url 'todo-detail' pk=todo.pk calendar=calendar.pk %}">{{todo.summary}}</a></td>
+        <td><a href="{{todo.get_absolute_url}}">{{todo.summary}}</a></td>
         <td>{{todo.created}}</td>
         <td>{{todo.updated}}</td>
         <td>{{todo.status}}</td>

@@ -1,9 +1,9 @@
-from . import models
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import redirect
-from django.views.generic import CreateView, DetailView, TemplateView, View
+from . import mixins, models
+
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.views.generic import CreateView, DetailView, TemplateView, UpdateView, View
 
 
 class Home(TemplateView):
@@ -12,6 +12,7 @@ class Home(TemplateView):
 
 class CalendarList(LoginRequiredMixin, CreateView):
     model = models.Calendar
+    template_name = "example/calendar_list.html"
     fields = ["name", "color", "public"]
 
     def get_queryset(self):
@@ -21,36 +22,20 @@ class CalendarList(LoginRequiredMixin, CreateView):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
-    def get_success_url(self):
-        return self.object.get_absolute_url()
-
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data["calendar_list"] = self.get_queryset()
         return data
 
 
-class CalendarDetail(UserPassesTestMixin, DetailView):
+class CalendarDetail(mixins.LoggedinOrPublic, DetailView):
     model = models.Calendar
+    template_public = "example/calendar_public.html"
 
-    def test_func(self):
-        obj = self.get_object()
-        return any(
-            [
-                obj.owner == self.request.user,
-                obj.public,
-            ]
-        )
 
-    def post(self, request, **kwargs):
-        if "summary" in request.POST:
-            calendar = self.get_object()
-            todo = models.Event.objects.create(
-                calendar=calendar,
-                summary=request.POST["summary"],
-            )
-            return redirect(todo)
-        return self.get(request, **kwargs)
+class CalendarUpdate(mixins.Owner, UpdateView):
+    model = models.Calendar
+    fields = ["name", "color", "public"]
 
 
 class CalendarToggle(LoginRequiredMixin, View):
@@ -65,7 +50,16 @@ class CalendarToggle(LoginRequiredMixin, View):
         return redirect("calendar-list")
 
 
-class TaskDetail(LoginRequiredMixin, DetailView):
+class TaskCreate(mixins.CalendarPermissionRequired, CreateView):
+    model = models.Event
+    fields = ["summary"]
+
+    def form_valid(self, form):
+        form.instance.calendar_id = self.kwargs["calendar"]
+        return super().form_valid(form)
+
+
+class TaskDetail(mixins.CalendarPermissionRequired, DetailView):
     model = models.Event
 
     def get_queryset(self):

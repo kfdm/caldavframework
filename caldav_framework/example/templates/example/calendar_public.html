@@ -12,15 +12,21 @@
     </ol>
 </nav>
 
-<form method="POST">
-    {% csrf_token %}
-    <table class="table">
-        {{form.as_table}}
-    </table>
-    <button class="btn btn-sm btn-warning">Update</button>
-</form>
-
-
-
+<table class="table table-sm">
+    <tr>
+        <th>Task</th>
+        <th>Created</th>
+        <th>Updated</th>
+        <th>Status</th>
+    </tr>
+    {% for todo in calendar.event_set.all %}
+    <tr>
+        <td><a href="{{todo.get_absolute_url}}">{{todo.summary}}</a></td>
+        <td>{{todo.created}}</td>
+        <td>{{todo.updated}}</td>
+        <td>{{todo.status}}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 {% endblock %}

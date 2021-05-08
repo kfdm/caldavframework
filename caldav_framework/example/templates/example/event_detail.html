@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Calendars</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
+        <li class="breadcrumb-item active"><a href="{% url 'calendar-detail' object.calendar.pk %}">{{object.calendar.name}}</a></li>
+        <li class="breadcrumb-item active"><a href="{% url 'todo-detail' pk=object.pk calendar=object.calendar.pk %}">{{object.summary}}</a></li>
+    </ol>
+</nav>
+
+
+
+{% endblock %}

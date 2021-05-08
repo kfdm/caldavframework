@@ -28,7 +28,9 @@ urlpatterns = [
     path("u/<user>/<calendar>/<task>.ics", caldav.Task.as_view(), name="task"),
     # Others
     path("", views.Home.as_view(), name="home"),
-    path("calendars", views.CalendarList.as_view(), name="calendar-list"),
+    path("calendar", views.CalendarList.as_view(), name="calendar-list"),
+    path("calendar/<uuid:pk>", views.CalendarDetail.as_view(), name="calendar-detail"),
+    path("calendar/<uuid:calendar>/<uuid:pk>", views.TaskDetail.as_view(), name="todo-detail"),
     path("accounts/", include(("django.contrib.auth.urls", "auth"), "auth")),
     path("admin/", admin.site.urls),
 ]

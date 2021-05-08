@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Calendars</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
+    </ol>
+</nav>
+
+<table class="table table-sm">
+    <tr>
+        <th>Calendar</th>
+        <th>Color</th>
+    </tr>
+    {% for calendar in calendar_list %}
+    <tr>
+        <td><a href="{% url 'calendar-detail' calendar.pk %}">{{calendar.name}}</a></td>
+        <td style="color: {{calendar.color}}">{{calendar.color}}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<form method="POST">
+    {% csrf_token %}
+    <h2>New Calendar</h2>
+    <dl class="row">
+        <dt class="col-sm-3">{{form.name.label}}</dt>
+        <dd class="col-sm-9">{{form.name}}</dd>
+
+        <dt class="col-sm-3"> {{form.color.label}}</dt>
+        <dd class="col-sm-9"><input type="color" name="{{form.color.name}}" id="{{form.color.id}}" /></dd>
+    </dl>
+    <button class="btn btn-sm btn-success">New Calendar</button>
+</form>
+
+{% endblock %}

@@ -118,6 +118,11 @@ USE_L10N = True
 USE_TZ = True
 
 
+# Site Settings
+SITE_ID = 1
+LOGIN_REDIRECT_URL = "calendar-list"
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -133,9 +138,13 @@ else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["caldav_framework.authentication.BasicAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "caldav_framework.authentication.BasicAuthentication"
+    ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_PARSER_CLASSES": ["caldav_framework.parsers.XMLParser",],
+    "DEFAULT_PARSER_CLASSES": [
+        "caldav_framework.parsers.XMLParser",
+    ],
 }
 
 
@@ -155,4 +164,3 @@ LOGGING["loggers"]["caldav_framework.caldav"] = {
     "filters": ["require_debug_true"],
 }
 LOGGING["handlers"]["console"]["level"] = "DEBUG" if DEBUG else "INFO"
-

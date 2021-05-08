@@ -13,10 +13,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+from ..example import caldav, views
+
 from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    # Caldav views
+    path(".well-known/caldav", caldav.WellKnownCaldav.as_view()),
+    path("z/discovery", caldav.UserPrincipalDiscovery.as_view(), name="discovery"),
+    path("u/<user>/", caldav.RootCollection.as_view(), name="principal"),
+    path("u/<user>/<calendar>/", caldav.Calendar.as_view(), name="calendar"),
+    path("u/<user>/<calendar>/<task>.ics", caldav.Task.as_view(), name="task"),
+    # Others
+    path("", views.Home.as_view(), name="home"),
+    path("calendars", views.CalendarList.as_view(), name="calendar-list"),
+    path("accounts/", include(("django.contrib.auth.urls", "auth"), "auth")),
     path("admin/", admin.site.urls),
-    path("", include("caldav_framework.example.urls")),
 ]

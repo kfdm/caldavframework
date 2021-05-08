@@ -2,11 +2,10 @@ import uuid
 
 import icalendar
 
-from . import signals
-
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.urls import reverse
 
 
 class Calendar(models.Model):
@@ -18,12 +17,17 @@ class Calendar(models.Model):
     etag = models.CharField(max_length=16)
 
     def to_ical(self):
-        cal = icalendar.Calendar()
+        calendar = icalendar.Calendar()
+        calendar["version"] = "2.0"
+        calendar["PRODID"] = "todo-server"
 
         for e in self.event_set.all():
             event = icalendar.Event.from_ical(e.raw)
-            cal.add_component(event)
-        return cal.to_ical().decode("utf8")
+            calendar.add_component(event)
+        return calendar.to_ical().decode("utf8")
+
+    def get_absolute_url(self):
+        return reverse("calendar-detail", args=(self.pk,))
 
 
 class Event(models.Model):
@@ -42,7 +46,10 @@ class Event(models.Model):
     )
 
     def to_ical(self):
-        cal = icalendar.Calendar()
-        event = icalendar.caldav_framework.from_ical(self.raw)
-        cal.add_component(event)
-        return cal.to_ical().decode("utf8")
+        calendar = icalendar.Todo.from_ical(self.raw)
+        calendar["version"] = "2.0"
+        calendar["PRODID"] = "todo-server"
+        return calendar.to_ical().decode("utf8")
+
+    def get_absolute_url(self):
+        return reverse("todo-detail", args=(self.calendar.pk, self.pk))

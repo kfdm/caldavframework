@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Calendars</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
+        <li class="breadcrumb-item active"><a href="{{calendar.get_absolute_url}}">{{calendar.name}}</a></li>
+    </ol>
+</nav>
+
+<form method="POST">
+    {% csrf_token %}
+    <input name="summary" placeholder="Summary of new task" />
+    <button class="btn btn-sm btn-success">Create</button>
+</form>
+
+<table class="table table-sm">
+    <tr>
+        <th>Task</th>
+        <th>Created</th>
+        <th>Updated</th>
+        <th>Status</th>
+    </tr>
+    {% for todo in calendar.event_set.all %}
+    <tr>
+        <td><a href="{{todo.get_absolute_url}}">{{todo.summary}}</a></td>
+        <td>{{todo.created}}</td>
+        <td>{{todo.updated}}</td>
+        <td>{{todo.status}}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

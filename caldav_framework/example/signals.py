@@ -8,5 +8,5 @@ def set_etag(instance, **kwargs):
     )
 
 
-pre_save.connect(set_etag, "caldav_framework.Event")
-pre_save.connect(set_etag, "caldav_framework.Calendar")
+pre_save.connect(set_etag, "example.Event")
+pre_save.connect(set_etag, "example.Calendar")

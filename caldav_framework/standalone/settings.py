@@ -48,8 +48,9 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.sites",
     "django.contrib.staticfiles",
-    "caldav_framework",
+    "caldav_framework.example",
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",
 ]
 
 ROOT_URLCONF = "caldav_framework.standalone.urls"
@@ -118,6 +120,11 @@ USE_L10N = True
 USE_TZ = True
 
 
+# Site Settings
+SITE_ID = 1
+LOGIN_REDIRECT_URL = "calendar-list"
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -133,9 +140,13 @@ else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["caldav_framework.authentication.BasicAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "caldav_framework.authentication.BasicAuthentication"
+    ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_PARSER_CLASSES": ["caldav_framework.parsers.XMLParser",],
+    "DEFAULT_PARSER_CLASSES": [
+        "caldav_framework.parsers.XMLParser",
+    ],
 }
 
 
@@ -155,4 +166,3 @@ LOGGING["loggers"]["caldav_framework.caldav"] = {
     "filters": ["require_debug_true"],
 }
 LOGGING["handlers"]["console"]["level"] = "DEBUG" if DEBUG else "INFO"
-

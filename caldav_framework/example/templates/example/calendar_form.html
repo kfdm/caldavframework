@@ -6,34 +6,21 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
+        <li class="breadcrumb-item active">
+            <a style="color: {{calendar.color}};" href="{{calendar.get_absolute_url}}">{{calendar.name}}</a>
+        </li>
     </ol>
 </nav>
 
-<table class="table table-sm">
-    <tr>
-        <th>Calendar</th>
-        <th>Color</th>
-    </tr>
-    {% for calendar in calendar_list %}
-    <tr>
-        <td><a href="{{calendar.get_absolute_url}}">{{calendar.name}}</a></td>
-        <td style="color: {{calendar.color}}">{{calendar.color}}</td>
-    </tr>
-    {% endfor %}
-</table>
-
-
 <form method="POST">
     {% csrf_token %}
-    <h2>New Calendar</h2>
-    <dl class="row">
-        <dt class="col-sm-3">{{form.name.label}}</dt>
-        <dd class="col-sm-9">{{form.name}}</dd>
-
-        <dt class="col-sm-3"> {{form.color.label}}</dt>
-        <dd class="col-sm-9"><input type="color" name="{{form.color.name}}" id="{{form.color.id}}" /></dd>
-    </dl>
-    <button class="btn btn-sm btn-success">New Calendar</button>
+    <table class="table">
+        {{form.as_table}}
+    </table>
+    <button class="btn btn-sm btn-warning">Update</button>
 </form>
+
+
+
 
 {% endblock %}

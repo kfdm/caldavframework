@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Calendars</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
+    </ol>
+</nav>
+
+<table class="table table-sm">
+    <tr>
+        <th>Calendar</th>
+        <th>Public</th>
+        <th>Update</th>
+    </tr>
+    {% for calendar in calendar_list %}
+    <tr>
+        <td><a style="color: {{calendar.color}};" href="{{calendar.get_absolute_url}}">{{calendar.name}}</a></td>
+        <td>
+            <form method="POST" action="{% url 'calendar-toggle' calendar.id %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-info">{{calendar.public}}</button>
+            </form>
+        </td>
+        <td>
+            <a class="btn btn-sm btn-warning" href="{% url 'calendar-update' calendar.id %}">Update</a>
+        </td>
+    </tr>
+
+    {% endfor %}
+</table>
+
+<form method="POST">
+    {% csrf_token %}
+    <h2>New Calendar</h2>
+    <table class="table">
+        {{form.as_table}}
+    </table>
+    <button class="btn btn-sm btn-success">New Calendar</button>
+</form>
+
+{% endblock %}

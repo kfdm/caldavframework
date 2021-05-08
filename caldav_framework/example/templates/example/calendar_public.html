@@ -28,13 +28,6 @@
         <td>{{todo.status}}</td>
     </tr>
     {% endfor %}
-    <form method="POST" action="{% url 'todo-create' calendar.pk %}">
-        {% csrf_token %}
-        <tr>
-            <td colspan="3"><input class="form-control" name="summary" placeholder="Summary of new task" /></td>
-            <td><button class="btn btn-sm btn-success">Create</button></td>
-        </tr>
-    </form>
 </table>
 
 {% endblock %}

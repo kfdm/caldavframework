@@ -94,7 +94,7 @@ class Task(base.CaldavView):
                 id=task,
                 calendar=self.object,
                 defaults={
-                    "raw": event.to_ical().decode("utf8"),
+                    "raw": request.data.to_ical().decode("utf8"),
                     "summary": event.decoded("summary").decode("utf8"),
                     "created": event.decoded("created"),
                     "status": event.decoded("status").decode("utf8"),

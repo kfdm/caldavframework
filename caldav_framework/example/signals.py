@@ -16,11 +16,15 @@ pre_save.connect(set_etag, "example.Calendar")
 
 def populate(instance, created, **kwargs):
     if created and not instance.raw:
+        calendar = icalendar.Calendar()
+        calendar["version"] = "2.0"
+        calendar["PRODID"] = "todo-server"
         event = icalendar.Todo()
-        event["uid"] = instance.pk
-        event["summary"] = instance.summary
-        event["created"] = instance.created
-        instance.raw = event.to_ical().decode("utf-8")
+        event.add("uid", instance.pk)
+        event.add("summary", instance.summary)
+        event.add("created", instance.created)
+        calendar.add_component(event)
+        instance.raw = calendar.to_ical().decode("utf-8")
         instance.save()
 
 

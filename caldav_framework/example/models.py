@@ -50,10 +50,7 @@ class Event(models.Model):
     )
 
     def to_ical(self):
-        calendar = icalendar.Todo.from_ical(self.raw)
-        calendar["version"] = "2.0"
-        calendar["PRODID"] = "todo-server"
-        return calendar.to_ical().decode("utf8")
+        return icalendar.Todo.from_ical(self.raw).to_ical().decode("utf8")
 
     def get_absolute_url(self):
         return reverse("todo-detail", args=(self.calendar.pk, self.pk))

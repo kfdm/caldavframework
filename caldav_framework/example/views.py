@@ -1,17 +1,18 @@
 from . import models
-
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
-from django.views.generic import CreateView, DetailView, TemplateView
+from django.views.generic import CreateView, DetailView, TemplateView, View
+from django.contrib import messages
 
 
 class Home(TemplateView):
     template_name = "home.html"
 
 
-class CalendarList(CreateView, LoginRequiredMixin):
+class CalendarList(LoginRequiredMixin, CreateView):
     model = models.Calendar
-    fields = ["name", "color"]
+    fields = ["name", "color", "public"]
 
     def get_queryset(self):
         return self.model.objects.filter(owner=self.request.user)
@@ -29,11 +30,17 @@ class CalendarList(CreateView, LoginRequiredMixin):
         return data
 
 
-class CalendarDetail(DetailView, LoginRequiredMixin):
+class CalendarDetail(UserPassesTestMixin, DetailView):
     model = models.Calendar
 
-    def get_queryset(self):
-        return self.model.objects.filter(owner=self.request.user)
+    def test_func(self):
+        obj = self.get_object()
+        return any(
+            [
+                obj.owner == self.request.user,
+                obj.public,
+            ]
+        )
 
     def post(self, request, **kwargs):
         if "summary" in request.POST:
@@ -46,7 +53,19 @@ class CalendarDetail(DetailView, LoginRequiredMixin):
         return self.get(request, **kwargs)
 
 
-class TaskDetail(DetailView, LoginRequiredMixin):
+class CalendarToggle(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        calendar = get_object_or_404(models.Calendar, pk=pk, owner=self.request.user)
+        calendar.public = not calendar.public
+        calendar.save()
+        if calendar.public:
+            messages.success(request, "Made '" + calendar.name + "' public")
+        else:
+            messages.info(request, "Made '" + calendar.name + "' Private")
+        return redirect("calendar-list")
+
+
+class TaskDetail(LoginRequiredMixin, DetailView):
     model = models.Event
 
     def get_queryset(self):

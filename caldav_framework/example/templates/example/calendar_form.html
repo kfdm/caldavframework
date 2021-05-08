@@ -9,15 +9,25 @@
     </ol>
 </nav>
 
+
+
+
 <table class="table table-sm">
     <tr>
         <th>Calendar</th>
         <th>Color</th>
+        <th>Public</th>
     </tr>
     {% for calendar in calendar_list %}
     <tr>
         <td><a href="{{calendar.get_absolute_url}}">{{calendar.name}}</a></td>
         <td style="color: {{calendar.color}}">{{calendar.color}}</td>
+        <td>
+            <form method="POST" action="{% url 'calendar-toggle' calendar.id %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-info">{{calendar.public}}</button>
+            </form>
+        </td>
     </tr>
     {% endfor %}
 </table>
@@ -26,13 +36,9 @@
 <form method="POST">
     {% csrf_token %}
     <h2>New Calendar</h2>
-    <dl class="row">
-        <dt class="col-sm-3">{{form.name.label}}</dt>
-        <dd class="col-sm-9">{{form.name}}</dd>
-
-        <dt class="col-sm-3"> {{form.color.label}}</dt>
-        <dd class="col-sm-9"><input type="color" name="{{form.color.name}}" id="{{form.color.id}}" /></dd>
-    </dl>
+    <table class="table">
+        {{form.as_table}}
+    </table>
     <button class="btn btn-sm btn-success">New Calendar</button>
 </form>
 

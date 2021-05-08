@@ -2,19 +2,23 @@ import uuid
 
 import icalendar
 
+from . import fields
+
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
 
 class Calendar(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
-    color = models.CharField(max_length=7)
+    color = fields.ColorField()
     order = models.IntegerField(default=0)
     etag = models.CharField(max_length=16)
+
+    public = models.BooleanField(default=False)
 
     def to_ical(self):
         calendar = icalendar.Calendar()

@@ -13,12 +13,31 @@ class CalendarPermissionRequired(mixins.PermissionRequiredMixin):
         try:
             self.calendar = models.Calendar.objects.get(
                 pk=self.kwargs["calendar"],
-                owner=self.request.user,
+                owner_id=self.request.user.id,
             )
         except models.Calendar.DoesNotExist:
             return False
         else:
             return True
+
+
+class CalendarOrPublicRequired(mixins.PermissionRequiredMixin):
+    def has_permission(self):
+        try:
+            self.calendar = models.Calendar.objects.get(
+                pk=self.kwargs["calendar"],
+            )
+        except models.Calendar.DoesNotExist:
+            return False
+        else:
+            return (
+                self.request.user.id == self.calendar.owner.id or self.calendar.public
+            )
+
+    def get_template_names(self):
+        if self.request.user == self.calendar.owner:
+            return super().get_template_names()
+        return [self.template_public]
 
 
 class LoggedinOrPublic(mixins.PermissionRequiredMixin):
@@ -32,4 +51,4 @@ class LoggedinOrPublic(mixins.PermissionRequiredMixin):
         names = super().get_template_names()
         if self.request.user == self.object.owner:
             return names
-        return self.template_public
+        return [self.template_public]

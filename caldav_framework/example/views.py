@@ -59,8 +59,6 @@ class TaskCreate(mixins.CalendarPermissionRequired, CreateView):
         return super().form_valid(form)
 
 
-class TaskDetail(mixins.CalendarPermissionRequired, DetailView):
+class TaskDetail(mixins.CalendarOrPublicRequired, DetailView):
     model = models.Event
-
-    def get_queryset(self):
-        return self.model.objects.filter(calendar__owner=self.request.user)
+    template_public = "example/event_public.html"

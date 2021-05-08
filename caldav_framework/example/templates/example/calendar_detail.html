@@ -8,11 +8,10 @@
         <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
         <li class="breadcrumb-item active">
             <a style="color: {{calendar.color}};" href="{{calendar.get_absolute_url}}">{{calendar.name}}</a>
+            {% if calendar.public %}(Public){% endif %}
         </li>
     </ol>
 </nav>
-
-
 
 <table class="table table-sm">
     <tr>
@@ -37,8 +36,5 @@
         </tr>
     </form>
 </table>
-
-
-
 
 {% endblock %}

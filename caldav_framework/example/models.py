@@ -14,7 +14,7 @@ class Calendar(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
-    color = fields.ColorField()
+    color = fields.ColorField(max_length=9)
     order = models.IntegerField(default=0)
     etag = models.CharField(max_length=16)
 

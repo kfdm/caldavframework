@@ -20,6 +20,7 @@ def from_ical(data: icalendar.Calendar):
             "summary": event.decoded("SUMMARY").decode("utf8"),
             "created": event.decoded("CREATED"),
             "status": event.decoded("STATUS").decode("utf8"),
+            "description": event.decoded("DESCRIPTION", b"").decode("utf8"),
             "updated": event.decoded("LAST-MODIFIED"),
         }
 
@@ -54,5 +55,6 @@ def to_ical(instance: models.Event):
     replace("summary", instance.summary)
     replace("created", instance.created)
     replace("last-modified", instance.updated)
+    replace("description", instance.description)
 
     return calendar.to_ical().decode("utf-8")

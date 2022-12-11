@@ -77,4 +77,4 @@ class TaskDetail(mixins.CalendarOrPublicRequired, DetailView):
 
 class TaskUpdate(mixins.Owner, UpdateView):
     model = models.Event
-    fields = ["summary", "status"]
+    fields = ["summary", "status", "description"]

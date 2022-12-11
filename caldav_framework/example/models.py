@@ -41,6 +41,7 @@ class Event(models.Model):
     etag = models.CharField(max_length=16, editable=False)
 
     summary = models.CharField(max_length=128)
+    description = models.TextField(blank=True)
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(default=timezone.now)
     status = models.CharField(

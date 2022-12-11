@@ -37,6 +37,10 @@
                 <th>Etag</th>
                 <td>{{object.etag}}</td>
             </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{object.description}}</td>
+            </tr>
         </table>
         <a href="{% url 'todo-update' object.calendar.pk object.pk %}" class="float-right btn btn-warning btn-sm">{% translate 'Change' %}</a>
     </div>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <h1>Calendars</h1>
@@ -13,28 +14,36 @@
         <li class="breadcrumb-item active"><a href="{{object.get_absolute_url}}">{{object.summary}}</a></li>
     </ol>
 </nav>
-
-<table class="table">
-    <tr>
-        <th>Summary</th>
-        <td>{{object.summary}}</td>
-    </tr>
-    <tr>
-        <th>Created</th>
-        <td>{{object.created}}</td>
-    </tr>
-    <tr>
-        <th>Updated</th>
-        <td>{{object.updated}}</td>
-    </tr>
-    <tr>
-        <th>Status</th>
-        <td>{{object.status}}</td>
-    </tr>
-</table>
-
-<details>
-    <pre>{{object.raw}}</pre>
-</details>
+<div class="form-row">
+    <div class="col-6">
+        <table class="table">
+            <tr>
+                <th>Summary</th>
+                <td>{{object.summary}}</td>
+            </tr>
+            <tr>
+                <th>Created</th>
+                <td>{{object.created}}</td>
+            </tr>
+            <tr>
+                <th>Updated</th>
+                <td>{{object.updated}}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{object.status}}</td>
+            </tr>
+            <tr>
+                <th>Etag</th>
+                <td>{{object.etag}}</td>
+            </tr>
+        </table>
+        <a href="{% url 'todo-update' object.calendar.pk object.pk %}" class="float-right btn btn-warning btn-sm">{% translate 'Change' %}</a>
+    </div>
+    <div class="col-6">
+        <h2>Debug</h2>
+        <pre>{{object.raw}}</pre>
+    </div>
+</div>
 
 {% endblock %}

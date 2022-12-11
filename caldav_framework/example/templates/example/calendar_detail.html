@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <h1>Calendars</h1>
@@ -13,28 +14,44 @@
     </ol>
 </nav>
 
+{% if 'completed' in request.GET %}
+<a href="{{request.path}}" class="btn btn-sm btn-warning">Hide Completed</a>
+{% else %}
+<a href="{{request.path}}?completed=1" class="btn btn-sm btn-success">Show Completed</a>
+{% endif %}
+
 <table class="table table-sm">
     <tr>
         <th>Task</th>
         <th>Created</th>
         <th>Updated</th>
         <th>Status</th>
+        <th>Etag</th>
     </tr>
-    {% for todo in calendar.event_set.all %}
-    <tr>
-        <td><a href="{{todo.get_absolute_url}}">{{todo.summary}}</a></td>
+    {% for todo in event_set.all %}
+    <tr {% if todo.status == 'COMPLETED' %}class="bg-light" {% endif %}>
+        <td>
+            <a href="{{todo.get_absolute_url}}">{{todo.summary}}</a>
+            {% if calendar.owner == request.user %}
+            <a href="{% url 'todo-update' calendar.pk todo.pk %}" class="float-right btn btn-warning btn-sm">{% translate 'Change' %}</a>
+            {% endif %}
+        </td>
         <td>{{todo.created}}</td>
         <td>{{todo.updated}}</td>
         <td>{{todo.status}}</td>
+        <td>{{todo.etag}}</td>
     </tr>
     {% endfor %}
+
+    {% if calendar.owner == request.user %}
     <form method="POST" action="{% url 'todo-create' calendar.pk %}">
         {% csrf_token %}
         <tr>
             <td colspan="3"><input class="form-control" name="summary" placeholder="Summary of new task" /></td>
-            <td><button class="btn btn-sm btn-success">Create</button></td>
+            <td><button class="btn btn-sm btn-success">{% translate 'Add' %}</button></td>
         </tr>
     </form>
+    {% endif %}
 </table>
 
 {% endblock %}

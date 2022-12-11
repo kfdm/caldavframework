@@ -55,6 +55,10 @@ class Event(models.Model):
     def get_absolute_url(self):
         return reverse("todo-detail", args=(self.calendar.pk, self.pk))
 
+    @property
+    def owner(self):
+        return self.calendar.owner
+
 
 class APIEvent(Event):
     class Meta:

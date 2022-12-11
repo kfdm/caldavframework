@@ -50,7 +50,12 @@ class Event(models.Model):
     )
 
     def to_ical(self):
-        return icalendar.Todo.from_ical(self.raw).to_ical().decode("utf8")
+        return self.raw
 
     def get_absolute_url(self):
         return reverse("todo-detail", args=(self.calendar.pk, self.pk))
+
+
+class APIEvent(Event):
+    class Meta:
+        proxy = True

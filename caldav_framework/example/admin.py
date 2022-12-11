@@ -12,4 +12,5 @@ class CalendarAdmin(admin.ModelAdmin):
 @admin.register(models.Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = ("summary", "created", "updated", "status", "etag")
+    list_filter = ("calendar", "status")
     readonly_fields = ("raw", "etag")

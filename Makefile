@@ -1,6 +1,8 @@
-APP_BIN := .venv/bin/todo-server
-PYTHON_BIN := .venv/bin/python
-PIP_BIN := .venv/bin/pip
+SYSTEM_PYTHON ?= python3.10
+ENV_DIR := .venv
+APP_BIN := $(ENV_DIR)/bin/todo-server
+PYTHON_BIN := $(ENV_DIR)/bin/python
+PIP_BIN := $(ENV_DIR)/bin/pip
 DOCKER := kfdm/todo-server
 
 .PHONY:	test build migrate run shell clean pip reset dist
@@ -10,7 +12,7 @@ test: ${APP_BIN}
 	${APP_BIN} test -v 2
 
 $(PIP_BIN):
-	python3 -m venv .venv
+	$(SYSTEM_PYTHON) -m venv $(ENV_DIR)
 	$(PIP_BIN) install -U pip
 
 ${APP_BIN}: $(PIP_BIN)

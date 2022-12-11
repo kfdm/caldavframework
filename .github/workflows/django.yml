@@ -53,6 +53,7 @@ jobs:
       - name: Run tests
         run: make test
         env:
+          SYSTEM_PYTHON: python${{ matrix.python-version }}
           SECRET_KEY: github-actions
           DATABASE_URL: postgres://postgres:postgres@localhost/${{ matrix.python-version }}
           CELERY_BROKER_URL: redis://localhost:6379/0

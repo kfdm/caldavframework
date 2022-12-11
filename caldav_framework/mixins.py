@@ -3,7 +3,6 @@ from .response import MultistatusResponse
 from django.http.request import HttpRequest
 from django.urls import resolve
 
-
 class ReportMixin:
     def report(self, request: HttpRequest, response: MultistatusResponse):
         query = request.data.find("{DAV:}prop")
@@ -11,7 +10,7 @@ class ReportMixin:
             propstats = response.propstat(href.text)
             parts = resolve(href.text).kwargs
 
-            for prop in query.getchildren():
+            for prop in query.iter():
                 propstats << self.dispatch(
                     "report", request=request, prop=prop, **parts
                 )
@@ -21,7 +20,7 @@ class ReportMixin:
 class PropfindMixin:
     def propfind(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
-        for prop in request.data.find("{DAV:}prop").getchildren():
+        for prop in request.data.find("{DAV:}prop").iter():
             propstats << self.dispatch("propfind", request=request, prop=prop)
         propstats.render(request)
         return propstats
@@ -30,7 +29,7 @@ class PropfindMixin:
 class ProppatchMixin:
     def proppatch(self, request: HttpRequest, response: MultistatusResponse, href: str):
         propstats = response.propstat(href)
-        for prop in request.data.find("{DAV:}set").find("{DAV:}prop").getchildren():
+        for prop in request.data.find("{DAV:}set").find("{DAV:}prop").iter():
             propstats << self.dispatch("proppatch", request=request, prop=prop)
         propstats.render(request)
         return propstats

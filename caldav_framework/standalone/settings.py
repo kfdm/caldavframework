@@ -11,28 +11,32 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-import pathlib
+from pathlib import Path
 
-import environ
+from environ import Env
 
 from django.utils.log import DEFAULT_LOGGING as LOGGING
 
 from caldav_framework.version import __version__
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = pathlib.Path(__file__).parent.parent.parent
-ENV_FILE = BASE_DIR / ".env"
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_ENV = BASE_DIR / ".env"
 
-env = environ.Env()
-if ENV_FILE.exists():
-    env.read_env(str(ENV_FILE))
+env = Env()
+if BASE_ENV.exists():
+    with BASE_ENV.open() as fp:
+        env.read_env(fp)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env.str("SECRET_KEY")
+SECRET_KEY = env.str(
+    "SECRET_KEY",
+    default="django-insecure-2k$#m)u5^ky5a+r-6bq%@dk*+gzr^j7&d92#7hfp^s_*d$!2g7",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)

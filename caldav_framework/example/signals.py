@@ -1,7 +1,13 @@
-import icalendar
+import logging
 
-from django.db.models.signals import post_save, pre_save
+from . import convert
+
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from django.utils import timezone
 from django.utils.crypto import get_random_string
+
+logger = logging.getLogger(__name__)
 
 
 def set_etag(instance, **kwargs):
@@ -11,21 +17,23 @@ def set_etag(instance, **kwargs):
 
 
 pre_save.connect(set_etag, "example.Event")
+pre_save.connect(set_etag, "example.APIEvent")
 pre_save.connect(set_etag, "example.Calendar")
 
 
-def populate(instance, created, **kwargs):
-    if created and not instance.raw:
-        calendar = icalendar.Calendar()
-        calendar["version"] = "2.0"
-        calendar["PRODID"] = "todo-server"
-        event = icalendar.Todo()
-        event.add("uid", instance.pk)
-        event.add("summary", instance.summary)
-        event.add("created", instance.created)
-        calendar.add_component(event)
-        instance.raw = calendar.to_ical().decode("utf-8")
-        instance.save()
+@receiver(pre_save, sender="example.Event")
+def update_calendar_data(instance, raw, **kwargs):
+    if raw:
+        return
+    # When an Event object is updated, we want to ensure
+    # that our 'updated' field is updated, along with ensuring
+    # our calendar raw data is also updated
+    logger.debug("Updating raw calendar data for %s", instance)
+    instance.updated = timezone.now()
+    instance.raw = convert.to_ical(instance)
 
 
-post_save.connect(populate, "example.Event")
+# Not currently in use but showing in the comments for future use
+# @receiver(pre_save, sender="example.APIEvent")
+# def pre_save_api(**kwargs):
+#     print("pre_save_api", kwargs)

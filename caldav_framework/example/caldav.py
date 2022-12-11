@@ -1,4 +1,4 @@
-from . import models
+from . import convert, models
 
 from django.shortcuts import get_object_or_404, resolve_url
 
@@ -89,23 +89,18 @@ class Task(base.CaldavView):
         return get_object_or_404(models.Calendar, owner=request.user, id=calendar)
 
     def put(self, request, calendar, task, **kwargs):
-        for event in request.data.walk("vtodo"):
-            todo, created = models.Event.objects.update_or_create(
-                id=task,
-                calendar=self.object,
-                defaults={
-                    "raw": request.data.to_ical().decode("utf8"),
-                    "summary": event.decoded("summary").decode("utf8"),
-                    "created": event.decoded("created"),
-                    "status": event.decoded("status").decode("utf8"),
-                    "updated": event.decoded("LAST-MODIFIED"),
-                },
-            )
+        # When we recieve PUT data from an API client, we want to use
+        # our proxy model (to avoid our extra logic) and decode our
+        # calendar object to give us the default object values
+        todo, _ = models.APIEvent.objects.update_or_create(
+            id=task,
+            calendar=self.object,
+            defaults=convert.from_ical(request.data),
+        )
 
-            response = HttpResponse(status=201)
-            response["Etag"] = '"' + todo.etag + '"'
-            return response
-        return HttpResponse(status=500)
+        response = HttpResponse(status=201)
+        response["Etag"] = '"' + todo.etag + '"'
+        return response
 
     def delete(self, request, task, **kwargs):
         models.Event.objects.get(pk=task).delete()

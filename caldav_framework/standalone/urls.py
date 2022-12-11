@@ -31,6 +31,7 @@ urlpatterns = [
     path("calendar", views.CalendarList.as_view(), name="calendar-list"),
     path("calendar/<uuid:calendar>/new", views.TaskCreate.as_view(), name="todo-create"),
     path("calendar/<uuid:calendar>/<uuid:pk>.ics", views.TaskDetail.as_view(), name="todo-detail"),
+    path("calendar/<uuid:calendar>/<uuid:pk>/update", views.TaskUpdate.as_view(), name="todo-update"),
     path("calendar/<uuid:pk>/toggle", views.CalendarToggle.as_view(), name="calendar-toggle"),
     path("calendar/<uuid:pk>/update", views.CalendarUpdate.as_view(), name="calendar-update"),
     path("calendar/<uuid:pk>", views.CalendarDetail.as_view(), name="calendar-detail"),

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Task</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'calendar-list' %}">Calendars</a></li>
+        <li class="breadcrumb-item active">
+            <a href="{{object.calendar.get_absolute_url}}">{{object.calendar.name}}</a>
+            {% if object.calendar.public %}(Public){% endif %}
+        </li>
+        <li class="breadcrumb-item active"><a href="{{object.get_absolute_url}}">{{object.summary}}</a></li>
+    </ol>
+</nav>
+
+<div class="form-row">
+    <div class="col-6">
+        <form method="POST">
+            {% csrf_token %}
+            <table class="table">
+                {{form.as_table}}
+            </table>
+            <button class="btn btn-sm btn-warning">Update</button>
+        </form>
+    </div>
+    <div class="col-6">
+        <pre>{{object.raw}}</pre>
+    </div>
+</div>
+
+{% endblock %}

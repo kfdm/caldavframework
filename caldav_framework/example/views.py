@@ -30,7 +30,18 @@ class CalendarList(LoginRequiredMixin, CreateView):
 
 class CalendarDetail(mixins.LoggedinOrPublic, DetailView):
     model = models.Calendar
-    template_public = "example/calendar_public.html"
+    template_public = "example/calendar_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if "completed" not in self.request.GET:
+            context["event_set"] = context["calendar"].event_set.exclude(
+                status="COMPLETED"
+            )
+        else:
+            context["event_set"] = context["calendar"].event_set.all()
+
+        return context
 
 
 class CalendarUpdate(mixins.Owner, UpdateView):
@@ -62,3 +73,8 @@ class TaskCreate(mixins.CalendarPermissionRequired, CreateView):
 class TaskDetail(mixins.CalendarOrPublicRequired, DetailView):
     model = models.Event
     template_public = "example/event_public.html"
+
+
+class TaskUpdate(mixins.Owner, UpdateView):
+    model = models.Event
+    fields = ["summary", "status", "description"]

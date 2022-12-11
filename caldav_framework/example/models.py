@@ -16,7 +16,7 @@ class Calendar(models.Model):
     name = models.CharField(max_length=128)
     color = fields.ColorField(max_length=9)
     order = models.IntegerField(default=0)
-    etag = models.CharField(max_length=16)
+    etag = models.CharField(max_length=16, editable=False)
 
     public = models.BooleanField(default=False)
 
@@ -37,8 +37,8 @@ class Calendar(models.Model):
 class Event(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
-    raw = models.TextField()
-    etag = models.CharField(max_length=16)
+    raw = models.TextField(editable=False)
+    etag = models.CharField(max_length=16, editable=False)
 
     summary = models.CharField(max_length=128)
     created = models.DateTimeField(default=timezone.now)

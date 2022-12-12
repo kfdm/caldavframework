@@ -9,6 +9,7 @@ ENV STATIC_ROOT /var/cache/app
 
 # Upgrade Pip
 RUN pip install --no-cache-dir -U pip
+RUN apk add --no-cache tini
 
 # Install Postgres Support
 RUN set -ex \
@@ -28,5 +29,5 @@ RUN todo-server collectstatic --noinput
 USER nobody
 EXPOSE 8000
 
-ENTRYPOINT [ "/sbin/tini", "--" ]
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["gunicorn", "caldav_framework.standalone.wsgi:application", "-b", "0.0.0.0:8000"]

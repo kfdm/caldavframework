@@ -72,7 +72,7 @@ deps:	$(PIPDEPTREE)
 $(PIP_COMPILE): $(PIP_BIN)
 	$(PIP_BIN) install pip-tools
 
-docker/requirements.txt: $(PIP_COMPILE) setup.py setup.cfg docker/requirements.in 
+docker/requirements.txt: $(PIP_COMPILE) setup.py setup.cfg docker/requirements.in
 	$(PIP_COMPILE) --extra=standalone --output-file docker/requirements.txt setup.py docker/requirements.in --no-emit-index-url
 
 .PHONY: compile
@@ -87,7 +87,7 @@ compile: docker/requirements.txt
 .PHONY:	build
 ## Docker: Build docker container
 build:	docker/requirements.txt
-	docker build . --tag test
+	docker build . --tag $(DOCKER_NAME):local
 
 ###############################################################################
 ### Django Tasks

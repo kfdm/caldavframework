@@ -96,7 +96,7 @@ build:	docker/requirements.txt
 .PHONY: web
 ## Django: Launch runserver for testing
 web:	$(APP_BIN)
-	$(APP_BIN) runserver 9000
+	$(APP_BIN) runserver 5232
 
 .PHONY:	shell
 ## Django: Open Python shell

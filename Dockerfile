@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM python:3.12-alpine
 LABEL maintainer=kungfudiscomonkey@gmail.com
 
 ENV PYTHONDONTWRITEBYTECODE 1
